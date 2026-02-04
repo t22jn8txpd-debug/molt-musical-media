@@ -14,4 +14,18 @@ const agentLimiter = rateLimit({
   legacyHeaders: false
 });
 
-module.exports = { authLimiter, agentLimiter };
+const contentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const feedLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+module.exports = { authLimiter, agentLimiter, contentLimiter, feedLimiter };

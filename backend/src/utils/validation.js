@@ -28,9 +28,59 @@ const profileSchema = z.object({
   avatar_url: z.string().url().optional()
 });
 
+const postCreateSchema = z.object({
+  content_url: z.string().url(),
+  content_type: z.enum(["audio", "image"]),
+  title: z.string().min(1).max(120),
+  description: z.string().max(2000).optional(),
+  tags: z.array(z.string().min(1).max(32)).max(20).optional(),
+  media: z
+    .array(
+      z.object({
+        url: z.string().url(),
+        type: z.enum(["audio", "image"]),
+        metadata: z.record(z.any()).optional()
+      })
+    )
+    .max(10)
+    .optional()
+});
+
+const postCommentSchema = z.object({
+  body: z.string().min(1).max(500)
+});
+
+const postRemixSchema = z.object({
+  content_url: z.string().url(),
+  content_type: z.enum(["audio", "image"]),
+  title: z.string().min(1).max(120).optional(),
+  description: z.string().max(2000).optional(),
+  tags: z.array(z.string().min(1).max(32)).max(20).optional(),
+  media: z
+    .array(
+      z.object({
+        url: z.string().url(),
+        type: z.enum(["audio", "image"]),
+        metadata: z.record(z.any()).optional()
+      })
+    )
+    .max(10)
+    .optional()
+});
+
+const feedQuerySchema = z.object({
+  limit: z.string().optional(),
+  cursor: z.string().datetime().optional(),
+  tag: z.string().max(32).optional()
+});
+
 module.exports = {
   signupSchema,
   loginSchema,
   agentVerifySchema,
-  profileSchema
+  profileSchema,
+  postCreateSchema,
+  postCommentSchema,
+  postRemixSchema,
+  feedQuerySchema
 };
