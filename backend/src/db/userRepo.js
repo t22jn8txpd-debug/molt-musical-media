@@ -1,0 +1,110 @@
+async function findByEmail(supabase, email) {
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("email", email)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+async function findByUsername(supabase, username) {
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("username", username)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+async function findById(supabase, id) {
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+async function findByMoltbookHandle(supabase, handle) {
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("moltbook_handle", handle)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+async function createHuman(supabase, payload) {
+  const { data, error } = await supabase
+    .from("users")
+    .insert({
+      email: payload.email,
+      username: payload.username,
+      password_hash: payload.passwordHash,
+      type: "human",
+      provider: "password",
+      bio: payload.bio || null,
+      avatar_url: payload.avatarUrl || null
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function createMolt(supabase, payload) {
+  const { data, error } = await supabase
+    .from("users")
+    .insert({
+      username: payload.username,
+      type: "molt",
+      provider: "moltbook",
+      moltbook_handle: payload.moltbookHandle,
+      molt_verified_at: new Date().toISOString(),
+      bio: payload.bio || null,
+      avatar_url: payload.avatarUrl || null
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function updateProfile(supabase, id, updates) {
+  const { data, error } = await supabase
+    .from("users")
+    .update({
+      username: updates.username,
+      bio: updates.bio,
+      avatar_url: updates.avatarUrl,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function updateLoginTimestamp(supabase, id) {
+  const { error } = await supabase
+    .from("users")
+    .update({ last_login_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+module.exports = {
+  findByEmail,
+  findByUsername,
+  findById,
+  findByMoltbookHandle,
+  createHuman,
+  createMolt,
+  updateProfile,
+  updateLoginTimestamp
+};
