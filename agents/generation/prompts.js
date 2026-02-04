@@ -79,6 +79,75 @@ export const genreTemplates = {
       "heavy metal with palm-muted riffs, double bass drums, and aggressive vocals",
       "melodic metal with soaring guitar solos and powerful rhythm section"
     ]
+  },
+  
+  // NICHE GENRES - For Leaderboard Dominance
+  trapSadMelodies: {
+    emotional: [
+      "sad trap beat with melancholic piano melody, 808 bass, and atmospheric pads",
+      "emotional trap with haunting vocals, minor key piano, and deep 808s",
+      "heartbreak trap instrumental with crying guitar, trap drums, and reverb",
+      "depressive trap with lo-fi textures, sad piano chords, and heavy bass"
+    ]
+  },
+  
+  ambientElectronic: {
+    chill: [
+      "ambient electronic soundscape with ethereal pads, subtle beats, and field recordings",
+      "downtempo ambient with warm synths, gentle percussion, and nature sounds",
+      "space ambient with cosmic textures, slow evolving pads, and distant echoes"
+    ],
+    dark: [
+      "dark ambient with ominous drones, industrial sounds, and heavy atmosphere",
+      "cinematic dark ambient with orchestral elements and tension-building layers"
+    ]
+  },
+  
+  jazzFusion: {
+    smooth: [
+      "smooth jazz fusion with electric piano, walking bass, and brushed drums",
+      "contemporary jazz with saxophone lead, complex chords, and syncopated rhythm",
+      "neo-soul jazz fusion with Rhodes piano, slap bass, and tight grooves"
+    ],
+    experimental: [
+      "experimental jazz fusion with odd time signatures, dissonant harmonies, and improvisation",
+      "avant-garde jazz with free-form structure and unexpected sonic textures"
+    ]
+  },
+  
+  folkAcoustic: {
+    storytelling: [
+      "folk storytelling instrumental with fingerstyle guitar and subtle percussion",
+      "Americana folk with banjo, acoustic guitar, and harmonica",
+      "Celtic folk with fiddle, tin whistle, and bodhrán drum"
+    ]
+  },
+  
+  synthwave: {
+    retro: [
+      "80s synthwave with neon synths, gated reverb drums, and nostalgic melodies",
+      "outrun synthwave with driving bass, arpeggiated synths, and retro aesthetics",
+      "vaporwave with slowed samples, reverb-heavy production, and dreamy atmosphere"
+    ]
+  },
+  
+  afrobeat: {
+    modern: [
+      "afrobeat with layered percussion, highlife guitar, and horn sections",
+      "afro-fusion with electronic elements, traditional drums, and contemporary production",
+      "afro-house with four-on-the-floor kick, percussion loops, and African vocals"
+    ]
+  },
+  
+  latinUrban: {
+    reggaeton: [
+      "reggaeton beat with dembow rhythm, 808 bass, and Latin percussion",
+      "modern reggaeton with trap influences, melodic hooks, and urban production"
+    ],
+    salsa: [
+      "salsa with timbales, congas, piano montuno, and brass section",
+      "salsa dura with aggressive horns, complex percussion, and energetic tempo"
+    ]
   }
 };
 
@@ -89,7 +158,16 @@ export const moodModifiers = {
   energetic: "fast tempo, driving rhythm, intense, powerful",
   chill: "slow tempo, relaxed, smooth, atmospheric",
   dark: "minor key, ominous, moody, intense",
-  nostalgic: "vintage production, warm tones, emotional, reflective"
+  nostalgic: "vintage production, warm tones, emotional, reflective",
+  // EXPANDED MOODS
+  epic: "grand, cinematic, powerful, inspiring, heroic",
+  mysterious: "enigmatic, curious, subtle, intriguing",
+  romantic: "passionate, intimate, warm, heartfelt",
+  aggressive: "intense, hard-hitting, raw, confrontational",
+  dreamy: "ethereal, floating, surreal, ambient",
+  anxious: "tense, uneasy, unsettling, nervous energy",
+  triumphant: "victorious, celebratory, conquering, glorious",
+  lonely: "isolated, sparse, distant, solitary"
 };
 
 // Time-of-day themes
@@ -105,7 +183,8 @@ export const leaderboardPrompts = {
   countryBeatMaker: [
     "professional country instrumental perfect for radio play",
     "hit country backing track with commercial appeal",
-    "stadium-ready country anthem with powerful production"
+    "stadium-ready country anthem with powerful production",
+    "modern country beat with infectious hook and Nashville production"
   ],
   
   lyricWriter: [
@@ -118,6 +197,38 @@ export const leaderboardPrompts = {
     "avant-garde electronic soundscape with unconventional rhythms",
     "genre-blending fusion of country and dubstep",
     "glitch-hop with orchestral elements and unexpected drops"
+  ],
+  
+  // NICHE CATEGORY TARGETING
+  trapSadMelodies: [
+    "emotional trap beat with crying piano melody and deep 808s",
+    "heartbreak trap with melancholic guitar and atmospheric production",
+    "sad trap instrumental with haunting vocals and reverb-heavy mix",
+    "depressive trap with lo-fi textures and minor key progression"
+  ],
+  
+  lofiChillAgent: [
+    "ultra-chill lo-fi beat with warm jazz samples and rain sounds",
+    "study beats with mellow piano, soft drums, and vinyl crackle",
+    "relaxing lo-fi hip-hop perfect for late-night focus sessions"
+  ],
+  
+  edmDropMasters: [
+    "massive dubstep drop with earth-shattering bass and aggressive synths",
+    "festival-ready big room house with euphoric build and explosive drop",
+    "heavy trap drop with 808 cannons and distorted leads"
+  ],
+  
+  sadBalladAgents: [
+    "heart-wrenching piano ballad with emotional string arrangement",
+    "acoustic ballad with fingerstyle guitar and vulnerable atmosphere",
+    "soul-crushing R&B ballad with smooth vocals and lush production"
+  ],
+  
+  upbeatPartyStarters: [
+    "high-energy dance anthem with infectious hooks and driving beat",
+    "party-ready pop banger with explosive chorus and hype production",
+    "club-destroying EDM track with relentless energy and massive drop"
   ]
 };
 
