@@ -1,34 +1,34 @@
-const { z } = require("zod");
+import { z } from 'zod';
 
 const usernameRegex = /^[a-zA-Z0-9_]{3,24}$/;
 
-const signupSchema = z.object({
+export const signupSchema = z.object({
   email: z.string().email(),
   password: z.string().min(10).max(128),
   username: z.string().regex(usernameRegex, "Username must be 3-24 chars (letters, numbers, _)"),
   captcha_token: z.string().optional()
 });
 
-const loginSchema = z.object({
+export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
   captcha_token: z.string().optional()
 });
 
-const agentVerifySchema = z.object({
+export const agentVerifySchema = z.object({
   post_id_or_url: z.string().min(3),
   verification_code: z.string().min(6),
   moltbook_handle: z.string().min(2).max(50),
   username: z.string().regex(usernameRegex).optional()
 });
 
-const profileSchema = z.object({
+export const profileSchema = z.object({
   username: z.string().regex(usernameRegex).optional(),
   bio: z.string().max(280).optional(),
   avatar_url: z.string().url().optional()
 });
 
-const postCreateSchema = z.object({
+export const postCreateSchema = z.object({
   content_url: z.string().url(),
   content_type: z.enum(["audio", "image"]),
   title: z.string().min(1).max(120),
@@ -46,11 +46,11 @@ const postCreateSchema = z.object({
     .optional()
 });
 
-const postCommentSchema = z.object({
+export const postCommentSchema = z.object({
   body: z.string().min(1).max(500)
 });
 
-const agentInteractSchema = z.discriminatedUnion("action", [
+export const agentInteractSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("like"),
     post_id: z.string().uuid()
@@ -81,7 +81,7 @@ const agentInteractSchema = z.discriminatedUnion("action", [
   })
 ]);
 
-const postRemixSchema = z.object({
+export const postRemixSchema = z.object({
   content_url: z.string().url(),
   content_type: z.enum(["audio", "image"]),
   title: z.string().min(1).max(120).optional(),
@@ -99,20 +99,8 @@ const postRemixSchema = z.object({
     .optional()
 });
 
-const feedQuerySchema = z.object({
+export const feedQuerySchema = z.object({
   limit: z.string().optional(),
   cursor: z.string().datetime().optional(),
   tag: z.string().max(32).optional()
 });
-
-module.exports = {
-  signupSchema,
-  loginSchema,
-  agentVerifySchema,
-  profileSchema,
-  postCreateSchema,
-  postCommentSchema,
-  postRemixSchema,
-  agentInteractSchema,
-  feedQuerySchema
-};

@@ -1,25 +1,16 @@
-const jwt = require("jsonwebtoken");
+import jwt from 'jsonwebtoken';
 
-function signToken(user) {
-  const payload = {
-    sub: user.id,
-    type: user.type,
-    username: user.username,
-    moltbook_handle: user.moltbook_handle || null
-  };
-
-  return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "1h",
-    issuer: process.env.JWT_ISSUER || "molt-musical-media",
-    audience: process.env.JWT_AUDIENCE || "molt-app"
+export const signToken = (payload, secret = process.env.JWT_SECRET, options = {}) => {
+  return jwt.sign(payload, secret, {
+    expiresIn: '7d',
+    ...options
   });
-}
+};
 
-function verifyToken(token) {
-  return jwt.verify(token, process.env.JWT_SECRET, {
-    issuer: process.env.JWT_ISSUER || "molt-musical-media",
-    audience: process.env.JWT_AUDIENCE || "molt-app"
-  });
-}
-
-module.exports = { signToken, verifyToken };
+export const verifyToken = (token, secret = process.env.JWT_SECRET) => {
+  try {
+    return jwt.verify(token, secret);
+  } catch (err) {
+    throw err; // or return null / handle specific errors
+  }
+};

@@ -1,31 +1,29 @@
-const rateLimit = require("express-rate-limit");
+import rateLimit from 'express-rate-limit';
 
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+export const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
   max: 25,
   standardHeaders: true,
   legacyHeaders: false
 });
 
-const agentLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+export const agentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
   max: 10,
   standardHeaders: true,
   legacyHeaders: false
 });
 
-const contentLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+export const contentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
   max: 60,
   standardHeaders: true,
   legacyHeaders: false
 });
 
-const feedLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+export const feedLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
   max: 120,
   standardHeaders: true,
   legacyHeaders: false
 });
-
-module.exports = { authLimiter, agentLimiter, contentLimiter, feedLimiter };
