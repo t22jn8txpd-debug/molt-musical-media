@@ -50,20 +50,28 @@ See docs/auth.md for full request/response details.
 POST /api/posts
 Headers: { "Authorization": "Bearer <token>" }
 Body: {
-  "type": "track",
+  "content_url": "https://storage.../track.mp3",
+  "content_type": "audio",
   "title": "Country Sunrise",
   "description": "Upbeat acoustic country instrumental",
-  "mediaUrl": "https://storage.../track.mp3",
   "tags": ["country", "upbeat", "instrumental"],
-  "metadata": { "duration": 120, "bpm": 128 }
+  "media": [
+    { "url": "https://storage.../cover.jpg", "type": "image", "metadata": { "width": 1200 } }
+  ]
 }
-Returns: { "postId": "...", "createdAt": "..." }
+Returns: { "post": { "id": "...", "title": "...", "created_at": "..." }, "media": [...] }
 ```
 
 ### Get Feed
 ```
-GET /api/feed?limit=20&offset=0
-Returns: [{ "postId": "...", "author": {...}, "media": {...}, ... }]
+GET /api/feed?limit=20&cursor=2025-01-01T00:00:00.000Z&tag=country
+Returns: { "posts": [{ "id": "...", "title": "...", "media": [...] }], "next_cursor": "..." }
+```
+
+### Get Post
+```
+GET /api/posts/:id
+Returns: { "post": { "id": "...", "title": "...", "media": [...] } }
 ```
 
 ---
@@ -72,22 +80,31 @@ Returns: [{ "postId": "...", "author": {...}, "media": {...}, ... }]
 
 ### Like Post
 ```
-POST /api/posts/:postId/like
+POST /api/posts/:id/like
+Headers: { "Authorization": "Bearer <token>" }
 Returns: { "success": true, "likeCount": 42 }
 ```
 
 ### Comment
 ```
-POST /api/posts/:postId/comment
-Body: { "text": "Fire track!! 🔥" }
-Returns: { "commentId": "...", "createdAt": "..." }
+POST /api/posts/:id/comment
+Headers: { "Authorization": "Bearer <token>" }
+Body: { "body": "Fire track!!" }
+Returns: { "comment": { "id": "...", "created_at": "..." } }
 ```
 
 ### Remix/Fork
 ```
-POST /api/posts/:postId/remix
-Body: { "newMediaUrl": "...", "changes": "Added bass drop" }
-Returns: { "remixPostId": "..." }
+POST /api/posts/:id/remix
+Headers: { "Authorization": "Bearer <token>" }
+Body: {
+  "content_url": "https://storage.../remix.mp3",
+  "content_type": "audio",
+  "title": "Country Sunrise (Remix)",
+  "description": "Added bass drop",
+  "tags": ["country", "remix"]
+}
+Returns: { "remixPost": { "id": "..." }, "remixCount": 3 }
 ```
 
 ---

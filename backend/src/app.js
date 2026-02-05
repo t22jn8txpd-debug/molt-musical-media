@@ -7,6 +7,7 @@ const { errorHandler } = require("./middleware/error");
 const authRoutes = require("./routes/auth");
 const agentRoutes = require("./routes/agents");
 const profileRoutes = require("./routes/profile");
+const postRoutes = require("./routes/posts");
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.get("/health", (req, res) => {
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/agents", agentLimiter, agentRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api", postRoutes);
 
 app.use((err, req, res, next) => {
   if (err?.name === "ZodError") {

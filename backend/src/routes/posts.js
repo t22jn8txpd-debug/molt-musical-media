@@ -1,14 +1,13 @@
 const express = require("express");
 const { authRequired } = require("../middleware/auth");
-const { agentVerifySchema, postCreateSchema, agentInteractSchema } = require("../utils/validation");
-const { verifyMoltbookProof } = require("../services/moltbook");
-const { signToken } = require("../utils/jwt");
-const { sanitizeText, sanitizeTags } = require("../utils/sanitize");
+const { contentLimiter, feedLimiter } = require("../middleware/rateLimit");
 const {
-  findByMoltbookHandle,
-  findByUsername,
-  createMolt
-} = require("../db/userRepo");
+  postCreateSchema,
+  postCommentSchema,
+  postRemixSchema,
+  feedQuerySchema
+} = require("../utils/validation");
+const { sanitizeText, sanitizeTags } = require("../utils/sanitize");
 
 const router = express.Router();
 
@@ -17,61 +16,7 @@ function normalizeTags(tags) {
   return cleaned.length ? cleaned : [];
 }
 
-router.post("/verify", async (req, res, next) => {
-  try {
-    const payload = agentVerifySchema.parse(req.body);
-    const verification = await verifyMoltbookProof({
-      postIdOrUrl: payload.post_id_or_url,
-      verificationCode: payload.verification_code,
-      moltbookHandle: payload.moltbook_handle
-    });
-
-    if (!verification.ok) {
-      return res.status(400).json({ error: verification.error });
-    }
-
-    const supabase = req.supabase;
-    const existingHandle = await findByMoltbookHandle(supabase, payload.moltbook_handle);
-    if (existingHandle) {
-      const token = signToken(existingHandle);
-      return res.status(200).json({
-        token,
-        user: {
-          id: existingHandle.id,
-          username: existingHandle.username,
-          type: existingHandle.type,
-          moltbook_handle: existingHandle.moltbook_handle
-        }
-      });
-    }
-
-    const username = payload.username || payload.moltbook_handle;
-    const existingUsername = await findByUsername(supabase, username);
-    if (existingUsername) {
-      return res.status(409).json({ error: "username_in_use" });
-    }
-
-    const user = await createMolt(supabase, {
-      username,
-      moltbookHandle: payload.moltbook_handle
-    });
-
-    const token = signToken(user);
-    return res.status(201).json({
-      token,
-      user: {
-        id: user.id,
-        username: user.username,
-        type: user.type,
-        moltbook_handle: user.moltbook_handle
-      }
-    });
-  } catch (err) {
-    return next(err);
-  }
-});
-
-router.post("/post", authRequired, async (req, res, next) => {
+router.post("/posts", authRequired, contentLimiter, async (req, res, next) => {
   try {
     const payload = postCreateSchema.parse(req.body);
     const userId = req.user?.sub;
@@ -131,47 +76,121 @@ router.post("/post", authRequired, async (req, res, next) => {
   }
 });
 
-router.post("/interact", authRequired, async (req, res, next) => {
+router.get("/feed", feedLimiter, async (req, res, next) => {
   try {
-    const payload = agentInteractSchema.parse(req.body);
+    const query = feedQuerySchema.parse(req.query);
+    const limit = Math.min(Number.parseInt(query.limit || "20", 10) || 20, 50);
+
+    let request = req.supabase
+      .from("posts")
+      .select(
+        "id,user_id,content_url,title,description,tags,likes_count,remixes_count,created_at,original_post_id,media:media(id,url,type,metadata)"
+      )
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (query.cursor) {
+      request = request.lt("created_at", query.cursor);
+    }
+
+    if (query.tag) {
+      request = request.contains("tags", [query.tag.toLowerCase()]);
+    }
+
+    const { data: posts, error } = await request;
+
+    if (error) {
+      return res.status(500).json({ error: "db_error", details: error.message });
+    }
+
+    return res.status(200).json({ posts, next_cursor: posts?.at(-1)?.created_at || null });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.get("/posts/:id", async (req, res, next) => {
+  try {
+    const postId = req.params.id;
+    const { data: post, error } = await req.supabase
+      .from("posts")
+      .select(
+        "id,user_id,content_url,title,description,tags,likes_count,remixes_count,created_at,original_post_id,media:media(id,url,type,metadata)"
+      )
+      .eq("id", postId)
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116") {
+        return res.status(404).json({ error: "not_found" });
+      }
+      return res.status(500).json({ error: "db_error", details: error.message });
+    }
+
+    return res.status(200).json({ post });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.post("/posts/:id/like", authRequired, contentLimiter, async (req, res, next) => {
+  try {
+    const postId = req.params.id;
     const userId = req.user?.sub;
 
-    if (payload.action === "like") {
-      const { data, error } = await req.supabase.rpc("like_post", {
-        p_post_id: payload.post_id,
-        p_user_id: userId
-      });
+    const { data, error } = await req.supabase.rpc("like_post", {
+      p_post_id: postId,
+      p_user_id: userId
+    });
 
-      if (error) {
-        return res.status(500).json({ error: "db_error", details: error.message });
-      }
-
-      return res.status(200).json({ success: true, likeCount: data });
+    if (error) {
+      return res.status(500).json({ error: "db_error", details: error.message });
     }
 
-    if (payload.action === "comment") {
-      const body = sanitizeText(payload.body, 500);
-      const { data: comment, error } = await req.supabase
-        .from("post_comments")
-        .insert({
-          post_id: payload.post_id,
-          user_id: userId,
-          body
-        })
-        .select("id,post_id,user_id,body,created_at")
-        .single();
+    return res.status(200).json({ success: true, likeCount: data });
+  } catch (err) {
+    return next(err);
+  }
+});
 
-      if (error) {
-        return res.status(500).json({ error: "db_error", details: error.message });
-      }
+router.post("/posts/:id/comment", authRequired, contentLimiter, async (req, res, next) => {
+  try {
+    const postId = req.params.id;
+    const payload = postCommentSchema.parse(req.body);
+    const userId = req.user?.sub;
+    const body = sanitizeText(payload.body, 500);
 
-      return res.status(201).json({ comment });
+    const { data: comment, error } = await req.supabase
+      .from("post_comments")
+      .insert({
+        post_id: postId,
+        user_id: userId,
+        body
+      })
+      .select("id,post_id,user_id,body,created_at")
+      .single();
+
+    if (error) {
+      return res.status(500).json({ error: "db_error", details: error.message });
     }
+
+    return res.status(201).json({ comment });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.post("/posts/:id/remix", authRequired, contentLimiter, async (req, res, next) => {
+  try {
+    const postId = req.params.id;
+    const payload = postRemixSchema.parse(req.body);
+    const userId = req.user?.sub;
+    const tags = normalizeTags(payload.tags);
 
     const { data: original, error: originalError } = await req.supabase
       .from("posts")
       .select("id,title")
-      .eq("id", payload.post_id)
+      .eq("id", postId)
       .single();
 
     if (originalError) {
@@ -181,8 +200,10 @@ router.post("/interact", authRequired, async (req, res, next) => {
       return res.status(500).json({ error: "db_error", details: originalError.message });
     }
 
-    const tags = normalizeTags(payload.tags);
-    const title = sanitizeText(payload.title || `Remix of ${original.title}`, 120);
+    const title = sanitizeText(
+      payload.title || `Remix of ${original.title}`,
+      120
+    );
     const description = payload.description ? sanitizeText(payload.description, 2000) : null;
 
     const { data: remixPost, error: remixError } = await req.supabase
@@ -193,7 +214,7 @@ router.post("/interact", authRequired, async (req, res, next) => {
         title,
         description,
         tags,
-        original_post_id: payload.post_id
+        original_post_id: postId
       })
       .select(
         "id,user_id,content_url,title,description,tags,likes_count,remixes_count,created_at,original_post_id"
@@ -235,7 +256,7 @@ router.post("/interact", authRequired, async (req, res, next) => {
     const { data: remixCount, error: countError } = await req.supabase.rpc(
       "refresh_remix_count",
       {
-        p_post_id: payload.post_id
+        p_post_id: postId
       }
     );
 

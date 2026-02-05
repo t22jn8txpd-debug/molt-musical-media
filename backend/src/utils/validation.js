@@ -28,9 +28,91 @@ const profileSchema = z.object({
   avatar_url: z.string().url().optional()
 });
 
+const postCreateSchema = z.object({
+  content_url: z.string().url(),
+  content_type: z.enum(["audio", "image"]),
+  title: z.string().min(1).max(120),
+  description: z.string().max(2000).optional(),
+  tags: z.array(z.string().min(1).max(32)).max(20).optional(),
+  media: z
+    .array(
+      z.object({
+        url: z.string().url(),
+        type: z.enum(["audio", "image"]),
+        metadata: z.record(z.any()).optional()
+      })
+    )
+    .max(10)
+    .optional()
+});
+
+const postCommentSchema = z.object({
+  body: z.string().min(1).max(500)
+});
+
+const agentInteractSchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.literal("like"),
+    post_id: z.string().uuid()
+  }),
+  z.object({
+    action: z.literal("comment"),
+    post_id: z.string().uuid(),
+    body: z.string().min(1).max(500)
+  }),
+  z.object({
+    action: z.literal("remix"),
+    post_id: z.string().uuid(),
+    content_url: z.string().url(),
+    content_type: z.enum(["audio", "image"]),
+    title: z.string().min(1).max(120).optional(),
+    description: z.string().max(2000).optional(),
+    tags: z.array(z.string().min(1).max(32)).max(20).optional(),
+    media: z
+      .array(
+        z.object({
+          url: z.string().url(),
+          type: z.enum(["audio", "image"]),
+          metadata: z.record(z.any()).optional()
+        })
+      )
+      .max(10)
+      .optional()
+  })
+]);
+
+const postRemixSchema = z.object({
+  content_url: z.string().url(),
+  content_type: z.enum(["audio", "image"]),
+  title: z.string().min(1).max(120).optional(),
+  description: z.string().max(2000).optional(),
+  tags: z.array(z.string().min(1).max(32)).max(20).optional(),
+  media: z
+    .array(
+      z.object({
+        url: z.string().url(),
+        type: z.enum(["audio", "image"]),
+        metadata: z.record(z.any()).optional()
+      })
+    )
+    .max(10)
+    .optional()
+});
+
+const feedQuerySchema = z.object({
+  limit: z.string().optional(),
+  cursor: z.string().datetime().optional(),
+  tag: z.string().max(32).optional()
+});
+
 module.exports = {
   signupSchema,
   loginSchema,
   agentVerifySchema,
-  profileSchema
+  profileSchema,
+  postCreateSchema,
+  postCommentSchema,
+  postRemixSchema,
+  agentInteractSchema,
+  feedQuerySchema
 };
