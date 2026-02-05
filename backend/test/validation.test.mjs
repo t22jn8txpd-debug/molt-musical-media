@@ -1,5 +1,7 @@
-const { describe, it, expect } = require("vitest");
-const { signupSchema, agentVerifySchema, profileSchema } = require("../src/utils/validation");
+import { describe, it, expect } from "vitest";
+import validationModule from "../src/utils/validation.js";
+
+const { signupSchema, agentVerifySchema, profileSchema } = validationModule;
 
 describe("validation schemas", () => {
   it("rejects short password", () => {
