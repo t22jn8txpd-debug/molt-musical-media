@@ -1,8 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { createRequire } from "node:module";
-
-const require = createRequire(import.meta.url);
-const { signupSchema, agentVerifySchema, profileSchema } = require("../src/utils/validation");
+import validationModule from "../src/utils/validation.js";
+const { signupSchema, agentVerifySchema, profileSchema } = validationModule;
 
 describe("validation schemas", () => {
   it("rejects short password", () => {
@@ -13,7 +11,6 @@ describe("validation schemas", () => {
     });
     expect(result.success).toBe(false);
   });
-
   it("accepts valid signup payload", () => {
     const result = signupSchema.safeParse({
       email: "test@example.com",
@@ -22,7 +19,6 @@ describe("validation schemas", () => {
     });
     expect(result.success).toBe(true);
   });
-
   it("rejects agent verify missing code", () => {
     const result = agentVerifySchema.safeParse({
       post_id_or_url: "abc",
@@ -31,7 +27,6 @@ describe("validation schemas", () => {
     });
     expect(result.success).toBe(false);
   });
-
   it("rejects profile with bad username", () => {
     const result = profileSchema.safeParse({
       username: "bad name"
