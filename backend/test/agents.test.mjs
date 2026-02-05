@@ -12,7 +12,6 @@ describe("agent routes auth", () => {
     expect(route).toBeTruthy();
     expect(routeHasMiddleware(route, authRequired)).toBe(true);
   });
-
   it("protects interact", () => {
     const route = findRoute(router, "post", "/interact");
     expect(route).toBeTruthy();
