@@ -44,7 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => RootShell(services: widget.services)),
       );
-    } catch (error) {
+    } catch (_) {
       setState(() {
         _errorMessage = 'Unable to sign in. Check your credentials and try again.';
       });

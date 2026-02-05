@@ -46,7 +46,7 @@ class _SignupScreenState extends State<SignupScreen> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => RootShell(services: widget.services)),
       );
-    } catch (error) {
+    } catch (_) {
       setState(() {
         _errorMessage = 'Unable to sign up right now. Try again in a moment.';
       });
