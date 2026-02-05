@@ -1,6 +1,6 @@
-const { verifyToken } = require("../utils/jwt");
+import { verifyToken } from "../utils/jwt.js";
 
-function authRequired(req, res, next) {
+export const authRequired = (req, res, next) => {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
   if (!token) {
@@ -13,6 +13,4 @@ function authRequired(req, res, next) {
   } catch (err) {
     return res.status(401).json({ error: "invalid_token" });
   }
-}
-
-module.exports = { authRequired };
+};

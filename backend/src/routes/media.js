@@ -1,14 +1,14 @@
-const express = require("express");
-const multer = require("multer");
-const { authRequired } = require("../middleware/auth");
-const { contentLimiter } = require("../middleware/rateLimit");
-const { sanitizeTags } = require("../utils/sanitize");
-const {
+import express from "express";
+import multer from "multer";
+import { authRequired } from "../middleware/auth.js";
+import { contentLimiter } from "../middleware/rateLimit.js";
+import { sanitizeTags } from "../utils/sanitize.js";
+import {
   uploadBuffer,
   buildSignedUrl,
   buildThumbnailUrl,
   buildWaveformUrl
-} = require("../services/cloudinary");
+} from "../services/cloudinary.js";
 
 const router = express.Router();
 
@@ -71,29 +71,24 @@ router.post(
       if (!file) {
         return res.status(400).json({ error: "missing_file" });
       }
-
       const ok = await runVirusScan(file);
       if (!ok) {
         return res.status(400).json({ error: "virus_scan_failed" });
       }
-
       const requestedType = req.body?.type;
       const inferredType = inferMediaType(file.mimetype);
       const mediaType =
         requestedType === "image" || requestedType === "audio"
           ? requestedType
           : inferredType;
-
       if (!mediaType) {
         return res.status(400).json({ error: "unsupported_media_type" });
       }
-
       const resourceType = mediaType === "image" ? "image" : "video";
       const tags = parseTags(req.body?.tags);
       const folder = process.env.CLOUDINARY_FOLDER || "molt-media";
       const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || undefined;
       const deliveryType = process.env.CLOUDINARY_DELIVERY_TYPE || "upload";
-
       const eager =
         mediaType === "image"
           ? [
@@ -105,7 +100,6 @@ router.post(
               }
             ]
           : undefined;
-
       const result = await uploadBuffer({
         buffer: file.buffer,
         filename: file.originalname,
@@ -116,7 +110,6 @@ router.post(
         deliveryType,
         eager
       });
-
       const version = result.version;
       const publicId = result.public_id;
       const secureUrl = result.secure_url;
@@ -129,19 +122,15 @@ router.post(
               version
             })
           : null;
-
       const thumbnailUrl =
         mediaType === "image"
           ? result.eager?.[0]?.secure_url ||
             buildThumbnailUrl({ publicId, version })
           : null;
-
       const waveformUrl =
         mediaType === "audio" ? buildWaveformUrl({ publicId, version }) : null;
-
       const mediaUrl = signedUrl || secureUrl;
       const postId = req.body?.post_id || null;
-
       const metadata = {
         format: result.format,
         bytes: result.bytes,
@@ -156,7 +145,6 @@ router.post(
         waveform_url: waveformUrl,
         tags
       };
-
       let mediaRecord = null;
       if (postId) {
         const { data, error } = await req.supabase
@@ -169,13 +157,11 @@ router.post(
           })
           .select("id,post_id,url,type,metadata,created_at")
           .single();
-
         if (error) {
           return res.status(500).json({ error: "db_error", details: error.message });
         }
         mediaRecord = data;
       }
-
       return res.status(201).json({
         media: mediaRecord,
         upload: {
@@ -193,4 +179,5 @@ router.post(
   }
 );
 
-module.exports = router;
+export default router;
+        

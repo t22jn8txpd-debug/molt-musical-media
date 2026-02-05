@@ -1,22 +1,16 @@
-function sanitizeText(value, maxLen) {
-  if (typeof value !== "string") {
-    return value;
-  }
-  const trimmed = value.trim().replace(/\s+/g, " ");
-  if (maxLen && trimmed.length > maxLen) {
-    return trimmed.slice(0, maxLen);
-  }
-  return trimmed;
+export function sanitizeText(text, maxLength = 1000) {
+  if (!text) return '';
+  // Basic sanitization: trim, remove HTML tags, etc.
+  return text
+    .trim()
+    .replace(/<[^>]*>/g, '') // strip HTML
+    .substring(0, maxLength);
 }
 
-function sanitizeTags(tags) {
-  if (!Array.isArray(tags)) {
-    return [];
-  }
-  const cleaned = tags
-    .map((tag) => (typeof tag === "string" ? tag.trim().toLowerCase() : ""))
-    .filter(Boolean);
-  return Array.from(new Set(cleaned));
+export function sanitizeTags(tags) {
+  if (!tags || !Array.isArray(tags)) return [];
+  return tags
+    .filter(tag => typeof tag === 'string' && tag.trim().length > 0)
+    .map(tag => tag.trim().toLowerCase().replace(/\s+/g, '-')) // normalize to slug-like
+    .slice(0, 20); // limit to reasonable number
 }
-
-module.exports = { sanitizeText, sanitizeTags };

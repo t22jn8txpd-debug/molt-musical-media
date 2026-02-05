@@ -12,9 +12,23 @@ const mediaRoutes = require("./routes/media");
 
 const app = express();
 
+app.disable("x-powered-by");
 app.use(helmet());
 app.use(cors({ origin: process.env.CORS_ORIGIN || "*" }));
 app.use(express.json({ limit: "1mb" }));
+
+app.use((req, res, next) => {
+  const startedAt = Date.now();
+  res.on("finish", () => {
+    if (process.env.NODE_ENV === "test") {
+      return;
+    }
+    const durationMs = Date.now() - startedAt;
+    // eslint-disable-next-line no-console
+    console.log(`${req.method} ${req.originalUrl} ${res.statusCode} ${durationMs}ms`);
+  });
+  next();
+});
 
 app.use((req, res, next) => {
   req.supabase = getSupabaseAdmin();

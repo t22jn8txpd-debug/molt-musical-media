@@ -1,4 +1,12 @@
-async function findByEmail(supabase, email) {
+// src/db/userRepo.js
+
+/**
+ * Find a user by their email address
+ * @param {Object} supabase - Supabase client instance
+ * @param {string} email - User's email
+ * @returns {Promise<Object|null>} User object or null if not found
+ */
+export async function findByEmail(supabase, email) {
   const { data, error } = await supabase
     .from("users")
     .select("*")
@@ -8,7 +16,13 @@ async function findByEmail(supabase, email) {
   return data;
 }
 
-async function findByUsername(supabase, username) {
+/**
+ * Find a user by their username
+ * @param {Object} supabase - Supabase client instance
+ * @param {string} username - User's username
+ * @returns {Promise<Object|null>} User object or null if not found
+ */
+export async function findByUsername(supabase, username) {
   const { data, error } = await supabase
     .from("users")
     .select("*")
@@ -18,7 +32,13 @@ async function findByUsername(supabase, username) {
   return data;
 }
 
-async function findById(supabase, id) {
+/**
+ * Find a user by their ID
+ * @param {Object} supabase - Supabase client instance
+ * @param {string} id - User's ID (UUID)
+ * @returns {Promise<Object|null>} User object or null if not found
+ */
+export async function findById(supabase, id) {
   const { data, error } = await supabase
     .from("users")
     .select("*")
@@ -28,83 +48,36 @@ async function findById(supabase, id) {
   return data;
 }
 
-async function findByMoltbookHandle(supabase, handle) {
+/**
+ * Create a new Molt (agent) user
+ * @param {Object} supabase - Supabase client instance
+ * @param {Object} params - Creation parameters
+ * @param {string} params.username - Desired username
+ * @param {string} params.moltbookHandle - Moltbook handle for verification
+ * @returns {Promise<Object>} The created user object
+ * @throws Error if creation fails
+ */
+export async function createMolt(supabase, { username, moltbookHandle }) {
+  const { data, error } = await supabase
+    .from("users")
+    .insert({
+      username,
+      moltbook_handle: moltbookHandle,
+      type: "molt",               // Marks this as an agent/Molt user
+      created_at: new Date().toISOString()
+      // Add other fields if your schema requires them (e.g., email: null, avatar_url: null)
+    })
+    .select("*")
+    .single();
+
+  if (error) throw error;
+  return data;
+export async function findByMoltbookHandle(supabase, moltbookHandle) {
   const { data, error } = await supabase
     .from("users")
     .select("*")
-    .eq("moltbook_handle", handle)
+    .eq("moltbook_handle", moltbookHandle)
     .maybeSingle();
   if (error) throw error;
   return data;
 }
-
-async function createHuman(supabase, payload) {
-  const { data, error } = await supabase
-    .from("users")
-    .insert({
-      email: payload.email,
-      username: payload.username,
-      password_hash: payload.passwordHash,
-      type: "human",
-      provider: "password",
-      bio: payload.bio || null,
-      avatar_url: payload.avatarUrl || null
-    })
-    .select("*")
-    .single();
-  if (error) throw error;
-  return data;
-}
-
-async function createMolt(supabase, payload) {
-  const { data, error } = await supabase
-    .from("users")
-    .insert({
-      username: payload.username,
-      type: "molt",
-      provider: "moltbook",
-      moltbook_handle: payload.moltbookHandle,
-      molt_verified_at: new Date().toISOString(),
-      bio: payload.bio || null,
-      avatar_url: payload.avatarUrl || null
-    })
-    .select("*")
-    .single();
-  if (error) throw error;
-  return data;
-}
-
-async function updateProfile(supabase, id, updates) {
-  const { data, error } = await supabase
-    .from("users")
-    .update({
-      username: updates.username,
-      bio: updates.bio,
-      avatar_url: updates.avatarUrl,
-      updated_at: new Date().toISOString()
-    })
-    .eq("id", id)
-    .select("*")
-    .single();
-  if (error) throw error;
-  return data;
-}
-
-async function updateLoginTimestamp(supabase, id) {
-  const { error } = await supabase
-    .from("users")
-    .update({ last_login_at: new Date().toISOString() })
-    .eq("id", id);
-  if (error) throw error;
-}
-
-module.exports = {
-  findByEmail,
-  findByUsername,
-  findById,
-  findByMoltbookHandle,
-  createHuman,
-  createMolt,
-  updateProfile,
-  updateLoginTimestamp
-};

@@ -5,16 +5,21 @@
 
 // Genre detection patterns
 const genrePatterns = {
-  country: /country|acoustic|banjo|fiddle|steel guitar|honky.?tonk/i,
+  country: /country|acoustic|banjo|fiddle|steel guitar|honky.?tonk|americana/i,
   hipHop: /hip.?hop|rap|trap|boom.?bap|lo.?fi|beats/i,
   edm: /edm|electronic|house|dubstep|trance|techno|bass music/i,
   pop: /pop|radio|catchy|mainstream/i,
   rock: /rock|guitar|metal|punk|grunge/i,
-  jazz: /jazz|swing|bebop|smooth/i,
+  jazz: /jazz|swing|bebop|smooth|fusion/i,
   classical: /classical|orchestra|symphony|piano concerto/i,
   rnb: /r&b|soul|neo.?soul|contemporary r&b/i,
   reggae: /reggae|dancehall|ska|dub/i,
-  latin: /latin|salsa|reggaeton|bachata/i
+  latin: /latin|salsa|reggaeton|bachata|dembow|afrobeat|afro/i,
+  // NICHE GENRES
+  ambient: /ambient|soundscape|atmospheric|ethereal/i,
+  synthwave: /synthwave|vaporwave|outrun|retro.?wave/i,
+  folk: /folk|celtic|fingerstyle/i,
+  experimental: /experimental|avant.?garde|glitch|noise/i
 };
 
 // Subgenre detection
@@ -24,30 +29,56 @@ const subgenrePatterns = {
   countryPop: /country pop/i,
   honkyTonk: /honky.?tonk/i,
   bluegrass: /bluegrass/i,
+  americana: /americana/i,
   
   // Hip-Hop
   boomBap: /boom.?bap|90s|old.?school/i,
   trap: /trap|808/i,
   loFi: /lo.?fi|chill beats|study/i,
+  trapSadMelodies: /sad trap|emotional trap|heartbreak trap|depressive trap/i,
   
   // EDM
   house: /house|four.?on.?the.?floor/i,
   dubstep: /dubstep|wobble|bass drop/i,
   trance: /trance|uplifting|progressive/i,
   techno: /techno/i,
-  drumAndBass: /drum.?and.?bass|dnb/i
+  drumAndBass: /drum.?and.?bass|dnb/i,
+  
+  // Niche EDM
+  synthwave: /synthwave|vaporwave|outrun/i,
+  afroHouse: /afro.?house/i,
+  
+  // Jazz
+  jazzFusion: /jazz fusion|fusion|contemporary jazz/i,
+  smoothJazz: /smooth jazz/i,
+  
+  // Ambient
+  darkAmbient: /dark ambient/i,
+  spaceAmbient: /space ambient|cosmic/i,
+  
+  // Latin
+  reggaeton: /reggaeton|dembow/i,
+  salsa: /salsa/i,
+  afrobeat: /afrobeat|afro.?beat/i
 };
 
 // Mood detection
 const moodPatterns = {
   happy: /happy|upbeat|joyful|cheerful|bright|positive|uplifting/i,
-  sad: /sad|melancholic|emotional|heartfelt|somber|blue/i,
-  energetic: /energetic|intense|powerful|driving|aggressive|hype/i,
+  sad: /sad|melancholic|emotional|heartfelt|somber|blue|crying|heartbreak|depressive/i,
+  energetic: /energetic|intense|powerful|driving|hype/i,
   chill: /chill|relaxed|smooth|mellow|calm|peaceful/i,
-  dark: /dark|ominous|moody|mysterious|haunting/i,
+  dark: /dark|ominous|moody|haunting/i,
   romantic: /romantic|love|passionate|intimate/i,
   nostalgic: /nostalgic|vintage|retro|throwback/i,
-  epic: /epic|cinematic|grand|massive|anthem/i
+  epic: /epic|cinematic|grand|massive|anthem/i,
+  // EXPANDED MOODS
+  aggressive: /aggressive|hard.?hitting|raw|confrontational|brutal/i,
+  dreamy: /dreamy|ethereal|floating|surreal|ambient/i,
+  mysterious: /mysterious|enigmatic|curious|subtle|intriguing/i,
+  anxious: /anxious|tense|uneasy|unsettling|nervous/i,
+  triumphant: /triumphant|victorious|celebratory|conquering|glorious/i,
+  lonely: /lonely|isolated|sparse|distant|solitary/i
 };
 
 // Tempo detection
@@ -208,11 +239,28 @@ function determineLeaderboardCategories(tags) {
   if (tags.moods.includes('sad')) {
     categories.push('sad-ballads');
   }
-  if (tags.moods.includes('energetic')) {
+  if (tags.moods.includes('energetic') || tags.moods.includes('happy')) {
     categories.push('upbeat-party-starters');
   }
   if (tags.moods.includes('chill')) {
     categories.push('lofi-chill-agents');
+  }
+  if (tags.moods.includes('epic') || tags.moods.includes('triumphant')) {
+    categories.push('epic-anthem-makers');
+  }
+  if (tags.moods.includes('dark') || tags.moods.includes('mysterious')) {
+    categories.push('dark-ambient-producers');
+  }
+  
+  // Subgenre-specific leaderboards
+  if (tags.subgenres.includes('trapSadMelodies')) {
+    categories.push('trap-sad-melodies');
+  }
+  if (tags.subgenres.includes('loFi')) {
+    categories.push('lofi-chill-agents');
+  }
+  if (tags.subgenres.includes('dubstep') || tags.subgenres.includes('trap')) {
+    categories.push('edm-drop-masters');
   }
   
   // Vocal/instrumental leaderboards

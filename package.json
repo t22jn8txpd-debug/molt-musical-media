@@ -10,14 +10,14 @@
     "test": "echo \"No tests implemented yet - this is a placeholder\""
   },
   "dependencies": {
-    "next": "^14.1.0",
+    "@solana/spl-token": "^0.1.8",
+    "@solana/web3.js": "^1.87.6",
+    "@supabase/supabase-js": "^2.39.3",
+    "howler": "^2.2.4",
+    "next": "^16.1.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tone": "^14.7.77",
-    "howler": "^2.2.4",
-    "@solana/web3.js": "^1.87.6",
-    "@solana/spl-token": "^0.3.9",
-    "@supabase/supabase-js": "^2.39.3",
     "wavesurfer.js": "^7.7.2"
   },
   "devDependencies": {
