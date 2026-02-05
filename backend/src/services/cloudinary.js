@@ -1,4 +1,11 @@
-const cloudinary = require("cloudinary").v2;
+import cloudinary from 'cloudinary';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true
+});
 
 let configured = false;
 
@@ -6,21 +13,17 @@ function ensureConfigured() {
   if (configured) {
     return;
   }
-
   if (process.env.CLOUDINARY_URL) {
     cloudinary.config({ secure: true });
     configured = true;
     return;
   }
-
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
   const apiKey = process.env.CLOUDINARY_API_KEY;
   const apiSecret = process.env.CLOUDINARY_API_SECRET;
-
   if (!cloudName || !apiKey || !apiSecret) {
     throw new Error("cloudinary_not_configured");
   }
-
   cloudinary.config({
     cloud_name: cloudName,
     api_key: apiKey,
@@ -30,7 +33,7 @@ function ensureConfigured() {
   configured = true;
 }
 
-function uploadBuffer({
+export const uploadBuffer = async ({
   buffer,
   filename,
   resourceType,
@@ -39,18 +42,17 @@ function uploadBuffer({
   uploadPreset,
   deliveryType,
   eager
-}) {
+}) => {
   ensureConfigured();
-
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
         resource_type: resourceType,
+        public_id: filename,
         folder,
         tags,
         upload_preset: uploadPreset,
-        eager,
-        type: deliveryType && deliveryType !== "upload" ? deliveryType : undefined,
+        delivery_type: deliveryType && deliveryType !== "upload" ? deliveryType : undefined,
         use_filename: true,
         unique_filename: true,
         filename_override: filename
@@ -62,14 +64,12 @@ function uploadBuffer({
         return resolve(result);
       }
     );
-
     stream.end(buffer);
   });
-}
+};
 
-function buildSignedUrl({ publicId, resourceType, deliveryType, version, transformation }) {
+export const buildSignedUrl = ({ publicId, resourceType, deliveryType, version, transformation }) => {
   ensureConfigured();
-
   return cloudinary.url(publicId, {
     resource_type: resourceType,
     type: deliveryType,
@@ -78,11 +78,10 @@ function buildSignedUrl({ publicId, resourceType, deliveryType, version, transfo
     version,
     transformation
   });
-}
+};
 
-function buildThumbnailUrl({ publicId, version, width = 600, height = 600 }) {
+export const buildThumbnailUrl = ({ publicId, version, width = 600, height = 600 }) => {
   ensureConfigured();
-
   return cloudinary.url(publicId, {
     resource_type: "image",
     secure: true,
@@ -96,11 +95,10 @@ function buildThumbnailUrl({ publicId, version, width = 600, height = 600 }) {
       }
     ]
   });
-}
+};
 
-function buildWaveformUrl({ publicId, version }) {
+export const buildWaveformUrl = ({ publicId, version }) => {
   ensureConfigured();
-
   return cloudinary.url(publicId, {
     resource_type: "video",
     secure: true,
@@ -112,19 +110,5 @@ function buildWaveformUrl({ publicId, version }) {
         background: "transparent"
       }
     ]
-  });
-}
-
-module.exports = {
-  uploadBuffer,
-  buildSignedUrl,
-  buildThumbnailUrl,
-  buildWaveformUrl
-export const buildSignedUrl = ({ publicId, resourceType, deliveryType, version }) => {
-  return cloudinary.v2.url(publicId, {
-    resource_type: resourceType,
-    type: deliveryType,
-    version,
-    sign_url: true
   });
 };
