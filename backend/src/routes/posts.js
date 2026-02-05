@@ -1,13 +1,13 @@
-const express = require("express");
-const { authRequired } = require("../middleware/auth");
-const { contentLimiter, feedLimiter } = require("../middleware/rateLimit");
-const {
+import express from "express";
+import { authRequired } from "../middleware/auth.js";
+import { contentLimiter, feedLimiter } from "../middleware/rateLimit.js";
+import {
   postCreateSchema,
   postCommentSchema,
   postRemixSchema,
   feedQuerySchema
-} = require("../utils/validation");
-const { sanitizeText, sanitizeTags } = require("../utils/sanitize");
+} from "../utils/validation.js";
+import { sanitizeText, sanitizeTags } from "../utils/sanitize.js";
 
 const router = express.Router();
 
@@ -64,7 +64,10 @@ router.post("/posts", authRequired, contentLimiter, async (req, res, next) => {
       });
     }
 
-    const { data: media, error: mediaError } = await req.supabase.from("media").insert(mediaRows).select();
+    const { data: media, error: mediaError } = await req.supabase
+      .from("media")
+      .insert(mediaRows)
+      .select();
 
     if (mediaError) {
       return res.status(500).json({ error: "db_error", details: mediaError.message });
@@ -112,6 +115,7 @@ router.get("/feed", feedLimiter, async (req, res, next) => {
 router.get("/posts/:id", async (req, res, next) => {
   try {
     const postId = req.params.id;
+
     const { data: post, error } = await req.supabase
       .from("posts")
       .select(
@@ -204,6 +208,7 @@ router.post("/posts/:id/remix", authRequired, contentLimiter, async (req, res, n
       payload.title || `Remix of ${original.title}`,
       120
     );
+
     const description = payload.description ? sanitizeText(payload.description, 2000) : null;
 
     const { data: remixPost, error: remixError } = await req.supabase
@@ -270,4 +275,4 @@ router.post("/posts/:id/remix", authRequired, contentLimiter, async (req, res, n
   }
 });
 
-module.exports = router;
+export default router;

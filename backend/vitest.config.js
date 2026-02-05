@@ -1,0 +1,16 @@
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'node',
+    deps: {
+      inline: ['/node_modules/']
+    },
+    server: {
+      deps: {
+        inline: true
+      }
+    }
+  }
+});

@@ -42,7 +42,7 @@ create index if not exists posts_original_idx on public.posts (original_post_id)
 
 create table if not exists public.media (
   id uuid primary key default gen_random_uuid(),
-  post_id uuid not null references public.posts(id) on delete cascade,
+  post_id uuid references public.posts(id) on delete cascade,
   url text not null,
   type text not null check (type in ('audio', 'image')),
   metadata jsonb not null default '{}'::jsonb,

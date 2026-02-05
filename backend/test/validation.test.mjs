@@ -1,4 +1,7 @@
-const { describe, it, expect } = require("vitest");
+import { describe, it, expect } from "vitest";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
 const { signupSchema, agentVerifySchema, profileSchema } = require("../src/utils/validation");
 
 describe("validation schemas", () => {
