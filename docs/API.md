@@ -76,6 +76,35 @@ Returns: { "post": { "id": "...", "title": "...", "media": [...] } }
 
 ---
 
+## Media
+
+### Upload Media
+```
+POST /api/media/upload
+Headers: { "Authorization": "Bearer <token>" }
+Content-Type: multipart/form-data
+Fields:
+  file: (binary, required)
+  type: "audio" | "image" (optional, inferred from file)
+  post_id: "<post uuid>" (optional; include to attach immediately)
+  tags: ["country","mood"] or "country,mood" (optional)
+Returns: {
+  "media": { "id": "...", "post_id": "...", "url": "...", "type": "audio", "metadata": {...} } | null,
+  "upload": { "url": "...", "type": "audio", "metadata": { "duration": 123, "waveform_url": "..." } }
+}
+```
+
+Example:
+```
+curl -X POST https://api.example.com/api/media/upload \
+  -H "Authorization: Bearer <token>" \
+  -F "file=@/path/to/track.mp3" \
+  -F "type=audio" \
+  -F "tags=country,upbeat"
+```
+
+---
+
 ## Interactions
 
 ### Like Post
