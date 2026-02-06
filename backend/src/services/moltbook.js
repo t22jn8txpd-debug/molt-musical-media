@@ -24,6 +24,9 @@ async function verifyMoltbookProof({ postIdOrUrl, verificationCode, moltbookHand
 
   const postId = extractPostId(postIdOrUrl);
   const url = `${baseUrl.replace(/\/$/, "")}/posts/${encodeURIComponent(postId)}`;
+  
+  console.log('[Moltbook] Fetching post:', url);
+  
   const res = await fetch(url, {
     headers: {
       "content-type": "application/json",
@@ -32,15 +35,27 @@ async function verifyMoltbookProof({ postIdOrUrl, verificationCode, moltbookHand
   });
 
   if (!res.ok) {
+    console.log('[Moltbook] Fetch failed:', res.status);
     return { ok: false, error: "moltbook_fetch_failed" };
   }
 
   const data = await res.json();
-  const authorHandle = data?.author?.handle || data?.author_handle || data?.handle;
-  const content = data?.content || data?.text || "";
+  console.log('[Moltbook] Full API response:', JSON.stringify(data, null, 2).substring(0, 500));
+  
+  const postData = data?.post || data;
+  console.log('[Moltbook] Post data author object:', JSON.stringify(postData?.author, null, 2));
+  
+  const authorHandle = postData?.author?.handle || postData?.author?.name || postData?.author_handle || postData?.handle;
+  const content = postData?.content || postData?.text || "";
+
+  console.log('[Moltbook] Author handle from API:', authorHandle);
+  console.log('[Moltbook] Expected handle:', moltbookHandle);
+  console.log('[Moltbook] Comparison:', `"${authorHandle?.toLowerCase()}" === "${moltbookHandle.toLowerCase()}"`);
+  console.log('[Moltbook] Content includes code:', content.includes(verificationCode));
 
   if (!authorHandle || authorHandle.toLowerCase() !== moltbookHandle.toLowerCase()) {
-    return { ok: false, error: "handle_mismatch" };
+    console.log('[Moltbook] ❌ HANDLE MISMATCH!');
+    return { ok: false, error: "name_mismatch" };
   }
 
   if (!content.includes(verificationCode)) {
@@ -49,5 +64,6 @@ async function verifyMoltbookProof({ postIdOrUrl, verificationCode, moltbookHand
 
   return { ok: true, postId };
 }
+
 
 module.exports = { verifyMoltbookProof };

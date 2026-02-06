@@ -1,15 +1,20 @@
-const required = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "JWT_SECRET"];
+import dotenv from "dotenv";
 
-function loadEnv() {
+const required = ["JWT_SECRET"];
+const optional = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"];
+
+export function loadEnv() {
   if (!process.env.NODE_ENV || process.env.NODE_ENV !== "production") {
-    // eslint-disable-next-line global-require
-    require("dotenv").config();
+    dotenv.config();
   }
 
   const missing = required.filter((key) => !process.env[key]);
   if (missing.length > 0) {
     throw new Error(`Missing required env vars: ${missing.join(", ")}`);
   }
-}
 
-module.exports = { loadEnv };
+  const missingOptional = optional.filter((key) => !process.env[key]);
+  if (missingOptional.length > 0) {
+    console.warn(`⚠️  Optional env vars not set: ${missingOptional.join(", ")}`);
+  }
+}
