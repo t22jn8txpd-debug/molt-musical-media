@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../app/services.dart';
 import '../../app/theme.dart';
 import '../../shared/widgets/molt_logo.dart';
 import '../auth/login_screen.dart';
+import '../home/home_screen.dart';
+import '../discover/discover_screen.dart';
 import '../charts/charts_screen.dart';
-import '../feed/feed_screen.dart';
 import '../post/create_post_screen.dart';
+import '../marketplace/marketplace_screen.dart';
 import '../agents/agent_verify_screen.dart';
 
 class RootShell extends StatefulWidget {
@@ -21,26 +24,16 @@ class RootShell extends StatefulWidget {
 class _RootShellState extends State<RootShell> {
   int _currentIndex = 0;
 
+  static const _navLabels = ['Home', 'Discover', 'Charts', 'Upload', 'Marketplace', 'Agents'];
+
   List<Widget> get _pages => [
-        FeedScreen(services: widget.services),
-        CreatePostScreen(services: widget.services),
+        HomeScreen(onNavigate: (i) => setState(() => _currentIndex = i)),
+        DiscoverScreen(services: widget.services),
         ChartsScreen(services: widget.services),
+        CreatePostScreen(services: widget.services),
+        const MarketplaceScreen(),
         AgentVerifyScreen(services: widget.services),
       ];
-
-  static const _navItems = [
-    BottomNavigationBarItem(icon: Icon(Icons.graphic_eq_rounded), label: 'Feed'),
-    BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: 'Post'),
-    BottomNavigationBarItem(icon: Icon(Icons.leaderboard_rounded), label: 'Charts'),
-    BottomNavigationBarItem(icon: Icon(Icons.smart_toy_outlined), label: 'Agent'),
-  ];
-
-  static const _railDestinations = [
-    NavigationRailDestination(icon: Icon(Icons.graphic_eq_rounded), label: Text('Feed')),
-    NavigationRailDestination(icon: Icon(Icons.add_circle_outline), label: Text('Post')),
-    NavigationRailDestination(icon: Icon(Icons.leaderboard_rounded), label: Text('Charts')),
-    NavigationRailDestination(icon: Icon(Icons.smart_toy_outlined), label: Text('Agent')),
-  ];
 
   Future<void> _signOut() async {
     await widget.services.tokenStore.clearToken();
@@ -53,59 +46,139 @@ class _RootShellState extends State<RootShell> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final useRail = constraints.maxWidth >= 900;
+    final w = MediaQuery.of(context).size.width;
+    final showTopNav = w >= 750;
 
-        final appBar = AppBar(
-          title: const MoltLogo(size: 22),
-          actions: [
-            IconButton(
-              onPressed: _signOut,
-              icon: const Icon(Icons.logout_rounded, size: 20),
-              tooltip: 'Sign out',
-            ),
-            const SizedBox(width: 8),
-          ],
-        );
-
-        if (useRail) {
-          return Scaffold(
-            appBar: appBar,
-            body: Row(
-              children: [
-                NavigationRail(
-                  selectedIndex: _currentIndex,
-                  onDestinationSelected: (i) => setState(() => _currentIndex = i),
-                  labelType: NavigationRailLabelType.all,
-                  destinations: _railDestinations,
-                ),
-                VerticalDivider(width: 1, color: MoltColors.purple.withValues(alpha: 0.15)),
-                Expanded(
-                  child: IndexedStack(index: _currentIndex, children: _pages),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return Scaffold(
-          appBar: appBar,
-          body: IndexedStack(index: _currentIndex, children: _pages),
-          bottomNavigationBar: Container(
+    return Scaffold(
+      body: Column(
+        children: [
+          // ── Top Nav Bar (foundation-style) ──
+          Container(
             decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: MoltColors.purple.withValues(alpha: 0.15)),
+              color: MoltColors.dark,
+              border: Border(bottom: BorderSide(color: MoltColors.purple.withValues(alpha: 0.2))),
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                child: SizedBox(
+                  height: 56,
+                  child: Row(
+                    children: [
+                      // Logo
+                      const MoltLogo(size: 20),
+                      if (showTopNav) ...[
+                        const SizedBox(width: 32),
+                        // Nav links
+                        ..._navLabels.asMap().entries.map((e) {
+                          final isActive = _currentIndex == e.key;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: TextButton(
+                              onPressed: () => setState(() => _currentIndex = e.key),
+                              style: TextButton.styleFrom(
+                                foregroundColor: isActive ? MoltColors.purple : Colors.white70,
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                              ),
+                              child: Text(
+                                e.value,
+                                style: TextStyle(
+                                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ],
+                      const Spacer(),
+                      // Action buttons
+                      _TopBarButton(
+                        label: 'Connect Wallet',
+                        outlined: true,
+                        onTap: () {},
+                      ),
+                      const SizedBox(width: 8),
+                      _TopBarButton(
+                        label: 'Sign Out',
+                        outlined: false,
+                        onTap: _signOut,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-            child: BottomNavigationBar(
-              currentIndex: _currentIndex,
-              onTap: (i) => setState(() => _currentIndex = i),
-              items: _navItems,
-            ),
           ),
-        );
-      },
+          // ── Page ──
+          Expanded(
+            child: IndexedStack(index: _currentIndex, children: _pages),
+          ),
+        ],
+      ),
+      // Bottom nav only on small screens
+      bottomNavigationBar: showTopNav
+          ? null
+          : Container(
+              decoration: BoxDecoration(
+                color: MoltColors.darker,
+                border: Border(top: BorderSide(color: MoltColors.purple.withValues(alpha: 0.15))),
+              ),
+              child: BottomNavigationBar(
+                currentIndex: _currentIndex,
+                onTap: (i) => setState(() => _currentIndex = i),
+                type: BottomNavigationBarType.fixed,
+                backgroundColor: MoltColors.darker,
+                selectedItemColor: MoltColors.purple,
+                unselectedItemColor: MoltColors.textMuted,
+                selectedFontSize: 11,
+                unselectedFontSize: 10,
+                items: const [
+                  BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
+                  BottomNavigationBarItem(icon: Icon(Icons.graphic_eq_rounded), label: 'Discover'),
+                  BottomNavigationBarItem(icon: Icon(Icons.leaderboard_rounded), label: 'Charts'),
+                  BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: 'Upload'),
+                  BottomNavigationBarItem(icon: Icon(Icons.storefront_rounded), label: 'Market'),
+                  BottomNavigationBarItem(icon: Icon(Icons.smart_toy_outlined), label: 'Agents'),
+                ],
+              ),
+            ),
+    );
+  }
+}
+
+class _TopBarButton extends StatelessWidget {
+  const _TopBarButton({required this.label, required this.outlined, required this.onTap});
+  final String label;
+  final bool outlined;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    if (outlined) {
+      return GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: MoltColors.purple),
+          ),
+          child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.white)),
+        ),
+      );
+    }
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          gradient: MoltColors.purplePinkGradient,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.white)),
+      ),
     );
   }
 }
