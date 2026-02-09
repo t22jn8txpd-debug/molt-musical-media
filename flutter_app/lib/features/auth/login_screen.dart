@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../app/services.dart';
-import '../../shared/widgets/primary_button.dart';
+import '../../app/theme.dart';
+import '../../shared/widgets/gradient_button.dart';
+import '../../shared/widgets/molt_logo.dart';
 import '../navigation/root_shell.dart';
 import 'auth_service.dart';
 import 'signup_screen.dart';
@@ -15,14 +17,29 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
+  bool _obscurePassword = true;
+  late final AnimationController _fadeController;
+  late final Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = CurvedAnimation(parent: _fadeController, curve: Curves.easeOut);
+    _fadeController.forward();
+  }
 
   @override
   void dispose() {
+    _fadeController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -49,9 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _errorMessage = 'Unable to sign in. Check your credentials and try again.';
       });
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -59,63 +74,154 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF0F1115), Color(0xFF151A24), Color(0xFF1D2B3A)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: MoltColors.backgroundGradient),
         child: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            children: [
-              const SizedBox(height: 24),
-              Text(
-                'Welcome back',
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Sign in to keep the session moving.',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white70),
-              ),
-              const SizedBox(height: 32),
-              TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'Email'),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Password'),
-              ),
-              const SizedBox(height: 12),
-              if (_errorMessage != null)
-                Text(
-                  _errorMessage!,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.redAccent),
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
+              children: [
+                const SizedBox(height: 40),
+                const Center(child: MoltLogo(size: 38)),
+                const SizedBox(height: 12),
+                Center(
+                  child: Text(
+                    'MUSICAL MEDIA',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 4,
+                      color: MoltColors.textMuted,
+                    ),
+                  ),
                 ),
-              const SizedBox(height: 20),
-              PrimaryButton(
-                label: 'Sign In',
-                onPressed: _login,
-                isLoading: _isLoading,
-              ),
-              const SizedBox(height: 24),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => SignupScreen(services: widget.services)),
-                  );
-                },
-                child: const Text('New here? Create an account'),
-              ),
-            ],
+                const SizedBox(height: 48),
+                ShaderMask(
+                  shaderCallback: (bounds) => MoltColors.purplePinkGradient.createShader(bounds),
+                  child: Text(
+                    'Welcome back',
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Sign in to keep the session moving.',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: MoltColors.textMuted),
+                ),
+                const SizedBox(height: 36),
+                _buildTextField(
+                  controller: _emailController,
+                  label: 'Email',
+                  icon: Icons.email_outlined,
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 18),
+                _buildTextField(
+                  controller: _passwordController,
+                  label: 'Password',
+                  icon: Icons.lock_outlined,
+                  obscure: _obscurePassword,
+                  suffix: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      color: MoltColors.textMuted,
+                      size: 20,
+                    ),
+                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                  ),
+                ),
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: MoltColors.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: MoltColors.error.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline, color: MoltColors.error, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _errorMessage!,
+                            style: const TextStyle(color: MoltColors.error, fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 28),
+                GradientButton(
+                  label: 'Sign In',
+                  icon: Icons.login,
+                  onPressed: _login,
+                  isLoading: _isLoading,
+                ),
+                const SizedBox(height: 28),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'New here? ',
+                      style: TextStyle(color: MoltColors.textMuted),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => SignupScreen(services: widget.services)),
+                      ),
+                      child: ShaderMask(
+                        shaderCallback: (bounds) =>
+                            MoltColors.purplePinkGradient.createShader(bounds),
+                        child: const Text(
+                          'Create an account',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 50),
+                Center(
+                  child: Text(
+                    '🔥 Where AI Agents & Humans Create Together',
+                    style: TextStyle(color: MoltColors.textMuted.withValues(alpha: 0.6), fontSize: 12),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType? keyboardType,
+    bool obscure = false,
+    Widget? suffix,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      obscureText: obscure,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, color: MoltColors.purple, size: 20),
+        suffixIcon: suffix,
       ),
     );
   }

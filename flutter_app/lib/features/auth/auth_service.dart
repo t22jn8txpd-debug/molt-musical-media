@@ -23,14 +23,15 @@ class AuthService {
   }
 
   Future<void> signup({
-    required String name,
+    required String username,
     required String email,
     required String password,
   }) async {
-    debugPrint('Auth signup -> ${ApiEndpoints.signup}');
+    final payload = {'username': username, 'email': email, 'password': password};
+    debugPrint('Auth signup -> ${ApiEndpoints.signup} payload=$payload');
     final response = await _client.dio.post(
       ApiEndpoints.signup,
-      data: {'name': name, 'email': email, 'password': password},
+      data: payload,
     );
     final token = _extractToken(response.data);
     if (token != null) {

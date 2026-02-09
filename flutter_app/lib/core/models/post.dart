@@ -9,6 +9,10 @@ class Post {
     this.caption,
     this.likes = 0,
     this.durationSeconds,
+    this.tags = const [],
+    this.remixesCount = 0,
+    this.userId,
+    this.createdAt,
   });
 
   final String id;
@@ -20,6 +24,10 @@ class Post {
   final String? caption;
   final int likes;
   final int? durationSeconds;
+  final List<String> tags;
+  final int remixesCount;
+  final String? userId;
+  final String? createdAt;
 
   factory Post.fromJson(Map<String, dynamic> json) {
     int? parseNullableInt(dynamic value) {
@@ -30,16 +38,59 @@ class Post {
       return null;
     }
 
+    // Extract audio URL from media array or content_url
+    String audioUrl = '';
+    final media = json['media'];
+    if (media is List && media.isNotEmpty) {
+      final audioMedia = media.firstWhere(
+        (m) => m is Map && m['type'] == 'audio',
+        orElse: () => media.first,
+      );
+      if (audioMedia is Map) {
+        audioUrl = audioMedia['url']?.toString() ?? '';
+      }
+    }
+    if (audioUrl.isEmpty) {
+      audioUrl = json['content_url']?.toString() ??
+          json['audioUrl']?.toString() ??
+          json['audio_url']?.toString() ??
+          '';
+    }
+
+    // Extract artwork from media array
+    String? artworkUrl;
+    if (media is List) {
+      final imageMedia = media.firstWhere(
+        (m) => m is Map && m['type'] == 'image',
+        orElse: () => null,
+      );
+      if (imageMedia is Map) {
+        artworkUrl = imageMedia['url']?.toString();
+      }
+    }
+    artworkUrl ??= json['artworkUrl']?.toString() ?? json['artwork_url']?.toString();
+
+    // Tags
+    List<String> tags = [];
+    final rawTags = json['tags'];
+    if (rawTags is List) {
+      tags = rawTags.map((t) => t.toString()).toList();
+    }
+
     return Post(
       id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
-      title: json['title']?.toString() ?? json['trackTitle']?.toString() ?? 'Untitled',
-      artist: json['artist']?.toString() ?? json['artistName']?.toString() ?? 'Unknown Artist',
-      audioUrl: json['audioUrl']?.toString() ?? json['audio_url']?.toString() ?? '',
-      artworkUrl: json['artworkUrl']?.toString() ?? json['artwork_url']?.toString(),
-      waveformUrl: json['waveformUrl']?.toString() ?? json['waveform_url']?.toString(),
-      caption: json['caption']?.toString(),
-      likes: parseNullableInt(json['likes'] ?? json['likesCount']) ?? 0,
+      title: json['title']?.toString() ?? 'Untitled',
+      artist: json['artist']?.toString() ?? json['username']?.toString() ?? 'Unknown Artist',
+      audioUrl: audioUrl,
+      artworkUrl: artworkUrl,
+      waveformUrl: json['waveformUrl']?.toString(),
+      caption: json['description']?.toString() ?? json['caption']?.toString(),
+      likes: parseNullableInt(json['likes_count'] ?? json['likes'] ?? json['likesCount']) ?? 0,
       durationSeconds: parseNullableInt(json['durationSeconds'] ?? json['duration_secs']),
+      tags: tags,
+      remixesCount: parseNullableInt(json['remixes_count'] ?? json['remixesCount']) ?? 0,
+      userId: json['user_id']?.toString(),
+      createdAt: json['created_at']?.toString(),
     );
   }
 }

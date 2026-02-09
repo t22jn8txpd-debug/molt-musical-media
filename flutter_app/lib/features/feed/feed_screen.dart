@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 
 import '../../app/services.dart';
+import '../../app/theme.dart';
 import '../../core/models/post.dart';
-import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/loading_state.dart';
-import '../../shared/widgets/offline_hint.dart';
+import '../../shared/widgets/empty_state.dart';
 import '../player/player_widget.dart';
 import 'feed_service.dart';
 import 'widgets/post_card.dart';
+import 'widgets/tag_chips.dart';
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({super.key, required this.services});
@@ -86,36 +87,41 @@ class _FeedScreenState extends State<FeedScreen> {
 
         final posts = snapshot.data ?? [];
         if (posts.isEmpty) {
-          return const EmptyState(
+          return EmptyState(
             title: 'No drops yet',
-            message: 'Your feed is quiet. Follow artists or refresh soon.',
+            message: 'The feed is quiet. Be the first to post a track! 🔥',
+            icon: Icons.music_note_rounded,
           );
         }
 
         return RefreshIndicator(
+          color: MoltColors.purple,
           onRefresh: _refresh,
           child: ListView.builder(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-            itemCount: posts.length + 1,
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+            itemCount: posts.length,
             itemBuilder: (context, index) {
-              if (index == 0) {
-                return const Padding(
-                  padding: EdgeInsets.only(bottom: 16),
-                  child: OfflineHint(),
-                );
-              }
-              final post = posts[index - 1];
+              final post = posts[index];
               final isActive = _activePostId == post.id;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 16),
                 child: PostCard(
                   post: post,
-                  child: PlayerWidget(
-                    post: post,
-                    player: _player,
-                    isActive: isActive,
-                    isBuffering: _isBuffering,
-                    onPlayPause: () => _togglePlay(post),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (post.tags.isNotEmpty) ...[
+                        TagChips(tags: post.tags),
+                        const SizedBox(height: 10),
+                      ],
+                      PlayerWidget(
+                        post: post,
+                        player: _player,
+                        isActive: isActive,
+                        isBuffering: _isBuffering,
+                        onPlayPause: () => _togglePlay(post),
+                      ),
+                    ],
                   ),
                 ),
               );
