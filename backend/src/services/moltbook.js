@@ -1,4 +1,4 @@
-const fetch = require("node-fetch");
+import fetch from "node-fetch";
 
 function extractPostId(postIdOrUrl) {
   try {
@@ -50,4 +50,4 @@ async function verifyMoltbookProof({ postIdOrUrl, verificationCode, moltbookHand
   return { ok: true, postId };
 }
 
-module.exports = { verifyMoltbookProof };
+export { verifyMoltbookProof };

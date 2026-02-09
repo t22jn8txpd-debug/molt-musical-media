@@ -1,7 +1,7 @@
-const express = require("express");
-const { profileSchema } = require("../utils/validation");
-const { authRequired } = require("../middleware/auth");
-const { findById, findByUsername, updateProfile } = require("../db/userRepo");
+import express from "express";
+import { profileSchema } from "../utils/validation.js";
+import { authRequired } from "../middleware/auth.js";
+import { findById, findByUsername, updateProfile } from "../db/userRepo.js";
 
 const router = express.Router();
 
@@ -61,4 +61,4 @@ router.put("/", authRequired, async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;

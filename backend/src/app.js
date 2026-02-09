@@ -1,14 +1,14 @@
-const express = require("express");
-const helmet = require("helmet");
-const cors = require("cors");
-const { getSupabaseAdmin } = require("./db/supabase");
-const { authLimiter, agentLimiter } = require("./middleware/rateLimit");
-const { errorHandler } = require("./middleware/error");
-const authRoutes = require("./routes/auth");
-const agentRoutes = require("./routes/agents");
-const profileRoutes = require("./routes/profile");
-const postRoutes = require("./routes/posts");
-const mediaRoutes = require("./routes/media");
+import express from "express";
+import helmet from "helmet";
+import cors from "cors";
+import { getSupabaseAdmin } from "./db/supabase.js";
+import { authLimiter, agentLimiter } from "./middleware/rateLimit.js";
+import { errorHandler } from "./middleware/error.js";
+import authRoutes from "./routes/auth.js";
+import agentRoutes from "./routes/agents.js";
+import profileRoutes from "./routes/profile.js";
+import postRoutes from "./routes/posts.js";
+import mediaRoutes from "./routes/media.js";
 
 const app = express();
 
@@ -54,4 +54,4 @@ app.use((err, req, res, next) => {
 
 app.use(errorHandler);
 
-module.exports = { app };
+export { app };

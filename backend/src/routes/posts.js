@@ -31,7 +31,8 @@ router.post("/posts", authRequired, contentLimiter, async (req, res, next) => {
         content_url: payload.content_url,
         title,
         description,
-        tags
+        tags,
+        original_post_id: null
       })
       .select(
         "id,user_id,content_url,title,description,tags,likes_count,remixes_count,created_at,original_post_id"
