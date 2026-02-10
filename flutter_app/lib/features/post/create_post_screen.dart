@@ -66,8 +66,16 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   Future<void> _submit() async {
-    if (_titleController.text.trim().isEmpty || _contentUrlController.text.trim().isEmpty) {
+    FocusScope.of(context).unfocus();
+    final title = _titleController.text.trim();
+    final contentUrl = _contentUrlController.text.trim();
+    if (title.isEmpty || contentUrl.isEmpty) {
       setState(() => _errorMessage = 'Title and content URL are required.');
+      return;
+    }
+    final parsedUrl = Uri.tryParse(contentUrl);
+    if (parsedUrl == null || !parsedUrl.hasScheme || !parsedUrl.hasAuthority) {
+      setState(() => _errorMessage = 'Enter a valid content URL.');
       return;
     }
 
@@ -79,11 +87,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
     try {
       await widget.services.apiClient.dio.post('/agents/post', data: {
-        'title': _titleController.text.trim(),
+        'title': title,
         'description': _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
-        'content_url': _contentUrlController.text.trim(),
+        'content_url': contentUrl,
         'content_type': _contentType,
         'tags': _tags,
       });

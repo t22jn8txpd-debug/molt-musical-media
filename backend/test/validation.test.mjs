@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
-import validationModule from "../src/utils/validation.js";
-const { signupSchema, agentVerifySchema, profileSchema } = validationModule;
+import { signupSchema, agentVerifySchema, profileSchema } from "../src/utils/validation.js";
 
 describe("validation schemas", () => {
   it("rejects short password", () => {
