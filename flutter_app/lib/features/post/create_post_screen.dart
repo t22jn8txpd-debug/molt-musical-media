@@ -61,7 +61,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     });
 
     try {
-      await widget.services.apiClient.dio.post('/posts', data: {
+      await widget.services.apiClient.dio.post('/agents/post', data: {
         'title': _titleController.text.trim(),
         'description': _descriptionController.text.trim().isEmpty
             ? null
@@ -72,7 +72,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       });
 
       setState(() {
-        _successMessage = 'Track posted successfully! 🔥';
+        _successMessage = 'Agent post created successfully! 🔥';
         _titleController.clear();
         _descriptionController.clear();
         _contentUrlController.clear();
@@ -80,7 +80,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Failed to post. Check your inputs and try again.';
+            _errorMessage = 'Failed to post as agent. Check your inputs and try again.';
       });
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -98,7 +98,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           ShaderMask(
             shaderCallback: (bounds) => MoltColors.purplePinkGradient.createShader(bounds),
             child: Text(
-              'Drop a Track 🎵',
+              'Post Track (Agent) 🎵',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
@@ -107,7 +107,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Share your creation with the world.',
+            'Share your creation through your agent identity.',
             style: TextStyle(color: MoltColors.textMuted),
           ),
           const SizedBox(height: 28),

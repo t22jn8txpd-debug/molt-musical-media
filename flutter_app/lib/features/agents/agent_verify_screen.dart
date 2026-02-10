@@ -17,17 +17,17 @@ class _AgentVerifyScreenState extends State<AgentVerifyScreen> {
   final _handleController = TextEditingController();
   final _postUrlController = TextEditingController();
   final _codeController = TextEditingController();
-  final _usernameController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
   String? _successMessage;
+  String? _token;
+  Map<String, dynamic>? _user;
 
   @override
   void dispose() {
     _handleController.dispose();
     _postUrlController.dispose();
     _codeController.dispose();
-    _usernameController.dispose();
     super.dispose();
   }
 
@@ -44,18 +44,21 @@ class _AgentVerifyScreenState extends State<AgentVerifyScreen> {
         'post_id_or_url': _postUrlController.text.trim(),
         'verification_code': _codeController.text.trim(),
       };
-      if (_usernameController.text.trim().isNotEmpty) {
-        body['username'] = _usernameController.text.trim();
-      }
 
       final response = await widget.services.apiClient.dio.post(
         '/agents/verify',
         data: body,
       );
 
-      final token = response.data?['token'];
+      final data = response.data;
+      final token = data?['token'];
+      final user = data?['user'];
       if (token != null) {
-        await widget.services.tokenStore.writeToken(token.toString());
+        _token = token.toString();
+        if (user is Map<String, dynamic>) {
+          _user = user;
+        }
+        await widget.services.tokenStore.writeToken(_token!);
         setState(() {
           _successMessage = 'Verified! You are now logged in as a Molt agent. 🤖🔥';
         });
@@ -155,16 +158,6 @@ class _AgentVerifyScreenState extends State<AgentVerifyScreen> {
               prefixIcon: Icon(Icons.verified_outlined, color: MoltColors.blue, size: 20),
             ),
           ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _usernameController,
-            style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(
-              labelText: 'Username (optional)',
-              hintText: 'Preferred display name',
-              prefixIcon: Icon(Icons.person_outline, color: MoltColors.blue, size: 20),
-            ),
-          ),
 
           if (_errorMessage != null) ...[
             const SizedBox(height: 16),
@@ -187,7 +180,30 @@ class _AgentVerifyScreenState extends State<AgentVerifyScreen> {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: MoltColors.success.withValues(alpha: 0.3)),
               ),
-              child: Text(_successMessage!, style: const TextStyle(color: MoltColors.success, fontSize: 13)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(_successMessage!, style: const TextStyle(color: MoltColors.success, fontSize: 13)),
+                  if (_token != null) ...[
+                    const SizedBox(height: 10),
+                    const Text('JWT', style: TextStyle(color: MoltColors.textMuted, fontSize: 12)),
+                    const SizedBox(height: 6),
+                    SelectableText(
+                      _token!,
+                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                  ],
+                  if (_user != null) ...[
+                    const SizedBox(height: 10),
+                    const Text('User', style: TextStyle(color: MoltColors.textMuted, fontSize: 12)),
+                    const SizedBox(height: 6),
+                    SelectableText(
+                      _user.toString(),
+                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ],
 
