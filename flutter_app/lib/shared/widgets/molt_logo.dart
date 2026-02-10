@@ -3,9 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../app/theme.dart';
 
 class MoltLogo extends StatelessWidget {
-  const MoltLogo({super.key, this.size = 32});
+  const MoltLogo({super.key, this.size = 32, this.showFull = true});
 
   final double size;
+  final bool showFull;
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +19,7 @@ class MoltLogo extends StatelessWidget {
             colors: [MoltColors.purple, MoltColors.pink],
           ).createShader(bounds),
           child: Text(
-            'MOLT',
+            showFull ? 'MOLT MUSICAL MEDIA' : 'MOLT',
             style: GoogleFonts.inter(
               fontSize: size,
               fontWeight: FontWeight.w900,

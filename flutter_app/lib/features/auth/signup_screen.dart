@@ -112,7 +112,7 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Center(child: MoltLogo(size: 32)),
+                const Center(child: MoltLogo(size: 24)),
                 const SizedBox(height: 32),
                 ShaderMask(
                   shaderCallback: (bounds) => MoltColors.purplePinkGradient.createShader(bounds),

@@ -82,19 +82,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
               children: [
                 const SizedBox(height: 40),
-                const Center(child: MoltLogo(size: 38)),
-                const SizedBox(height: 12),
-                Center(
-                  child: Text(
-                    'MUSICAL MEDIA',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 4,
-                      color: MoltColors.textMuted,
-                    ),
-                  ),
-                ),
+                const Center(child: MoltLogo(size: 28)),
                 const SizedBox(height: 48),
                 ShaderMask(
                   shaderCallback: (bounds) => MoltColors.purplePinkGradient.createShader(bounds),

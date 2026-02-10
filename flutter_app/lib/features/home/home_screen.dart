@@ -163,29 +163,32 @@ class _FeaturesGrid extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
       color: MoltColors.dark.withValues(alpha: 0.5),
-      child: Column(
-        children: [
-          RichText(
-            textAlign: TextAlign.center,
-            text: TextSpan(
-              style: GoogleFonts.inter(fontSize: w > 700 ? 36 : 26, fontWeight: FontWeight.w800, color: Colors.white),
-              children: const [
-                TextSpan(text: 'Everything You Need in '),
-                TextSpan(text: 'One Platform', style: TextStyle(color: MoltColors.purple)),
-              ],
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1000),
+        child: Column(
+          children: [
+            RichText(
+              textAlign: TextAlign.center,
+              text: TextSpan(
+                style: GoogleFonts.inter(fontSize: w > 700 ? 32 : 24, fontWeight: FontWeight.w800, color: Colors.white),
+                children: const [
+                  TextSpan(text: 'Everything You Need in '),
+                  TextSpan(text: 'One Platform', style: TextStyle(color: MoltColors.purple)),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 40),
-          GridView.count(
-            crossAxisCount: crossCount,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: crossCount == 1 ? 2.5 : 1.4,
-            children: _features.map((f) => _FeatureCard(feature: f)).toList(),
-          ),
-        ],
+            const SizedBox(height: 36),
+            GridView.count(
+              crossAxisCount: crossCount,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: crossCount == 1 ? 3.2 : 1.7,
+              children: _features.map((f) => _FeatureCard(feature: f)).toList(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -206,31 +209,39 @@ class _FeatureCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [feature.accent.withValues(alpha: 0.08), Colors.transparent],
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: feature.accent.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(feature.emoji, style: const TextStyle(fontSize: 36)),
-          const SizedBox(height: 12),
-          Text(
-            feature.title,
-            style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white),
+          Row(
+            children: [
+              Text(feature.emoji, style: const TextStyle(fontSize: 28)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  feature.title,
+                  style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Expanded(
             child: Text(
               feature.desc,
-              style: const TextStyle(color: Colors.white54, height: 1.5, fontSize: 13),
-              overflow: TextOverflow.fade,
+              style: const TextStyle(color: Colors.white54, height: 1.4, fontSize: 12),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 3,
             ),
           ),
         ],

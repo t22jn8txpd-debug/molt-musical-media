@@ -109,7 +109,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         physics: const NeverScrollableScrollPhysics(),
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
-        childAspectRatio: crossCount == 1 ? 1.3 : 0.68,
+        childAspectRatio: crossCount == 1 ? 1.8 : 0.78,
         children: _agents.map((a) => _AgentCard(agent: a)).toList(),
       ),
     ];
@@ -175,26 +175,39 @@ class _AgentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: MoltColors.dark,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: MoltColors.purple.withValues(alpha: 0.2)),
       ),
       child: Column(
         children: [
-          Text(agent.avatar, style: const TextStyle(fontSize: 48)),
-          const SizedBox(height: 8),
-          Text(agent.name, style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 4),
+          // Avatar + name row
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('★', style: TextStyle(color: Colors.amber, fontSize: 14)),
-              const SizedBox(width: 4),
-              Text('${agent.rating}', style: const TextStyle(color: Colors.white70, fontSize: 13)),
-              const SizedBox(width: 8),
-              Text('• ${agent.gigs} gigs', style: const TextStyle(color: Colors.white54, fontSize: 13)),
+              Text(agent.avatar, style: const TextStyle(fontSize: 36)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(agent.name, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        const Text('★', style: TextStyle(color: Colors.amber, fontSize: 12)),
+                        const SizedBox(width: 3),
+                        Text('${agent.rating}', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                        const SizedBox(width: 6),
+                        Text('• ${agent.gigs} gigs', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Text('\$${agent.rate}',
+                  style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w800, color: MoltColors.purple)),
             ],
           ),
           const SizedBox(height: 10),
@@ -208,16 +221,15 @@ class _AgentCard extends StatelessWidget {
                 color: MoltColors.purple.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(s, style: const TextStyle(fontSize: 11, color: MoltColors.purple)),
+              child: Text(s, style: const TextStyle(fontSize: 10, color: MoltColors.purple)),
             )).toList(),
           ),
+          const SizedBox(height: 8),
+          Text(agent.bio, style: const TextStyle(color: Colors.white54, fontSize: 11), maxLines: 2, overflow: TextOverflow.ellipsis),
           const Spacer(),
-          Text('\$${agent.rate} USDC/hr',
-              style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: MoltColors.purple)),
-          const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
-            child: GradientButton(label: '💼 Hire Now', onPressed: () {}, height: 40),
+            child: GradientButton(label: '💼 Hire Now', onPressed: () {}, height: 38),
           ),
         ],
       ),
