@@ -1,4 +1,11 @@
+import 'dart:typed_data';
+
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 
 import '../../app/services.dart';
 import '../../app/theme.dart';
@@ -22,8 +29,17 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   final List<String> _tags = [];
   String _contentType = 'audio';
   bool _isLoading = false;
+  bool _isUploading = false;
+  double _uploadProgress = 0;
   String? _errorMessage;
   String? _successMessage;
+  String? _uploadedUrl;
+  String? _uploadedType;
+  String? _thumbnailUrl;
+  String? _waveformUrl;
+  String? _previewUrl;
+  AudioPlayer? _audioPlayer;
+  bool _isPlaying = false;
 
   @override
   void dispose() {
@@ -31,6 +47,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     _descriptionController.dispose();
     _contentUrlController.dispose();
     _tagController.dispose();
+    _audioPlayer?.dispose();
     super.dispose();
   }
 
@@ -87,6 +104,119 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
   }
 
+  Future<void> _pickAndUpload() async {
+    setState(() {
+      _errorMessage = null;
+      _successMessage = null;
+      _isUploading = true;
+      _uploadProgress = 0;
+    });
+
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        allowMultiple: false,
+        type: FileType.custom,
+        allowedExtensions: const ['mp3', 'wav', 'flac', 'ogg', 'jpg', 'jpeg', 'png', 'webp'],
+        withData: kIsWeb,
+      );
+
+      if (result == null || result.files.isEmpty) {
+        setState(() {
+          _isUploading = false;
+        });
+        return;
+      }
+
+      final file = result.files.first;
+      final extension = (file.extension ?? '').toLowerCase();
+      final isImage = ['jpg', 'jpeg', 'png', 'webp'].contains(extension);
+      final mediaType = isImage ? 'image' : 'audio';
+      final maxBytes = isImage ? 10 * 1024 * 1024 : 50 * 1024 * 1024;
+      if (file.size > maxBytes) {
+        setState(() {
+          _isUploading = false;
+          _errorMessage = isImage
+              ? 'Image too large. Max 10MB.'
+              : 'Audio too large. Max 50MB.';
+        });
+        return;
+      }
+
+      if (kIsWeb && file.bytes == null) {
+        throw Exception('missing_bytes');
+      }
+      if (!kIsWeb && file.path == null) {
+        throw Exception('missing_path');
+      }
+
+      final multipartFile = kIsWeb
+          ? MultipartFile.fromBytes(file.bytes ?? Uint8List(0), filename: file.name)
+          : await MultipartFile.fromFile(file.path!, filename: file.name);
+
+      final formData = FormData.fromMap({
+        'file': multipartFile,
+        'type': mediaType,
+        'tags': _tags,
+      });
+
+      final response = await widget.services.apiClient.dio.post(
+        '/media/upload',
+        data: formData,
+        onSendProgress: (sent, total) {
+          if (total > 0) {
+            setState(() => _uploadProgress = sent / total);
+          }
+        },
+      );
+
+      final upload = response.data['upload'] as Map<String, dynamic>;
+      final metadata = upload['metadata'] as Map<String, dynamic>;
+      final url = upload['url'] as String;
+
+      setState(() {
+        _uploadedUrl = url;
+        _uploadedType = upload['type'] as String?;
+        _thumbnailUrl = metadata['thumbnail_url'] as String?;
+        _waveformUrl = metadata['waveform_url'] as String?;
+        _previewUrl = metadata['preview_url'] as String?;
+        _contentUrlController.text = url;
+        _contentType = _uploadedType ?? 'audio';
+        _successMessage = 'Track uploaded! URL inserted below.';
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Upload failed. Check file type/size and try again.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
+  }
+
+  Future<void> _togglePlayback() async {
+    if (_uploadedType != 'audio') return;
+    final url = _previewUrl ?? _uploadedUrl;
+    if (url == null) return;
+
+    _audioPlayer ??= AudioPlayer();
+    if (_isPlaying) {
+      await _audioPlayer?.pause();
+      if (mounted) setState(() => _isPlaying = false);
+      return;
+    }
+
+    try {
+      await _audioPlayer?.setUrl(url);
+      await _audioPlayer?.play();
+      if (mounted) setState(() => _isPlaying = true);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _errorMessage = 'Failed to play preview.');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -138,6 +268,84 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             ),
           ),
           const SizedBox(height: 16),
+
+          // Upload card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: MoltColors.cardGradient,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: MoltColors.purple.withValues(alpha: 0.2)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Upload Track or Art',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Audio: mp3/wav/flac/ogg (≤ 50MB) • Image: jpg/png/webp (≤ 10MB)',
+                  style: TextStyle(color: MoltColors.textMuted, fontSize: 12),
+                ),
+                const SizedBox(height: 16),
+                if (_isUploading)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(
+                      value: _uploadProgress == 0 ? null : _uploadProgress,
+                      minHeight: 8,
+                      backgroundColor: MoltColors.surface,
+                      valueColor: AlwaysStoppedAnimation<Color>(MoltColors.purple),
+                    ),
+                  ),
+                if (!_isUploading)
+                  GradientButton(
+                    label: 'Upload File',
+                    icon: Icons.cloud_upload,
+                    onPressed: _pickAndUpload,
+                  ),
+                if (_uploadedUrl != null) ...[
+                  const SizedBox(height: 16),
+                  if (_uploadedType == 'image')
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: CachedNetworkImage(
+                        imageUrl: _thumbnailUrl ?? _uploadedUrl!,
+                        fit: BoxFit.cover,
+                        height: 180,
+                      ),
+                    ),
+                  if (_uploadedType == 'audio')
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (_waveformUrl != null)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: CachedNetworkImage(
+                              imageUrl: _waveformUrl!,
+                              height: 90,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        const SizedBox(height: 12),
+                        GradientButton(
+                          label: _isPlaying ? 'Pause Preview' : 'Play Preview',
+                          icon: _isPlaying ? Icons.pause : Icons.play_arrow,
+                          onPressed: _togglePlayback,
+                        ),
+                      ],
+                    ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
 
           // Content URL
           TextField(

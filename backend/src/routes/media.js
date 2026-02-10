@@ -7,7 +7,8 @@ import {
   uploadBuffer,
   buildSignedUrl,
   buildThumbnailUrl,
-  buildWaveformUrl
+  buildWaveformUrl,
+  buildAudioPreviewUrl
 } from "../services/cloudinary.js";
 
 const router = express.Router();
@@ -16,6 +17,20 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 50 * 1024 * 1024 }
 });
+
+const AUDIO_EXTENSIONS = new Set(["mp3", "wav", "flac", "ogg"]);
+const IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp"]);
+const AUDIO_MIME_TYPES = new Set([
+  "audio/mpeg",
+  "audio/mp3",
+  "audio/wav",
+  "audio/x-wav",
+  "audio/flac",
+  "audio/ogg"
+]);
+const IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const MAX_AUDIO_BYTES = 50 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
 function parseTags(tags) {
   if (!tags) {
@@ -54,6 +69,35 @@ function inferMediaType(mimetype) {
   return null;
 }
 
+function getExtension(filename) {
+  if (!filename) {
+    return "";
+  }
+  const parts = filename.toLowerCase().split(".");
+  return parts.length > 1 ? parts.pop() : "";
+}
+
+function validateFile({ file, mediaType }) {
+  const extension = getExtension(file.originalname);
+  if (mediaType === "audio") {
+    if (!AUDIO_EXTENSIONS.has(extension) || !AUDIO_MIME_TYPES.has(file.mimetype)) {
+      return { ok: false, error: "invalid_audio_type" };
+    }
+    if (file.size > MAX_AUDIO_BYTES) {
+      return { ok: false, error: "audio_too_large" };
+    }
+  }
+  if (mediaType === "image") {
+    if (!IMAGE_EXTENSIONS.has(extension) || !IMAGE_MIME_TYPES.has(file.mimetype)) {
+      return { ok: false, error: "invalid_image_type" };
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      return { ok: false, error: "image_too_large" };
+    }
+  }
+  return { ok: true };
+}
+
 async function runVirusScan(file) {
   // Stub for virus scanning integration (e.g., ClamAV or a cloud scanner).
   // Return false to reject the upload.
@@ -84,11 +128,16 @@ router.post(
       if (!mediaType) {
         return res.status(400).json({ error: "unsupported_media_type" });
       }
-      const resourceType = mediaType === "image" ? "image" : "video";
+      const validation = validateFile({ file, mediaType });
+      if (!validation.ok) {
+        return res.status(400).json({ error: validation.error });
+      }
+      const resourceType = "auto";
       const tags = parseTags(req.body?.tags);
       const folder = process.env.CLOUDINARY_FOLDER || "molt-media";
       const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || undefined;
       const deliveryType = process.env.CLOUDINARY_DELIVERY_TYPE || "upload";
+      const cacheControl = "public, max-age=31536000, immutable";
       const eager =
         mediaType === "image"
           ? [
@@ -108,7 +157,8 @@ router.post(
         tags,
         uploadPreset,
         deliveryType,
-        eager
+        eager,
+        cacheControl
       });
       const version = result.version;
       const publicId = result.public_id;
@@ -117,7 +167,7 @@ router.post(
         deliveryType === "authenticated" || deliveryType === "private"
           ? buildSignedUrl({
               publicId,
-              resourceType,
+              resourceType: result.resource_type,
               deliveryType,
               version
             })
@@ -129,6 +179,8 @@ router.post(
           : null;
       const waveformUrl =
         mediaType === "audio" ? buildWaveformUrl({ publicId, version }) : null;
+      const previewUrl =
+        mediaType === "audio" ? buildAudioPreviewUrl({ publicId, version }) : null;
       const mediaUrl = signedUrl || secureUrl;
       const postId = req.body?.post_id || null;
       const metadata = {
@@ -143,6 +195,8 @@ router.post(
         version,
         thumbnail_url: thumbnailUrl,
         waveform_url: waveformUrl,
+        waveform_json: mediaType === "audio" ? { samples: [], source: "pending" } : null,
+        preview_url: previewUrl,
         tags
       };
       let mediaRecord = null;
@@ -166,6 +220,7 @@ router.post(
         media: mediaRecord,
         upload: {
           url: mediaUrl,
+          public_id: publicId,
           type: mediaType,
           metadata
         }
