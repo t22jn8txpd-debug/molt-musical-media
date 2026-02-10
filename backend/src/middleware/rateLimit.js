@@ -27,3 +27,10 @@ export const feedLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false
 });
+
+export const webhookLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false
+});

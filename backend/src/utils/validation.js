@@ -102,5 +102,11 @@ export const postRemixSchema = z.object({
 export const feedQuerySchema = z.object({
   limit: z.string().optional(),
   cursor: z.string().datetime().optional(),
-  tag: z.string().max(32).optional()
+  tag: z.string().max(32).optional(),
+  following: z.enum(["true", "false"]).optional()
+});
+
+export const notificationQuerySchema = z.object({
+  limit: z.string().optional(),
+  cursor: z.string().datetime().optional()
 });

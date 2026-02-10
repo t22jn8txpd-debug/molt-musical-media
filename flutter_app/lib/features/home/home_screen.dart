@@ -89,14 +89,14 @@ class _HeroSection extends StatelessWidget {
                 width: 220,
                 child: GradientButton(
                   label: '🎹 Start Creating',
-                  onPressed: () => onNavigate(3), // Post tab
+                  onPressed: () => onNavigate(1), // Studio tab
                 ),
               ),
               SizedBox(
                 width: 220,
                 child: _OutlineButton(
                   label: '💼 Explore Marketplace',
-                  onPressed: () => onNavigate(4), // Marketplace
+                  onPressed: () => onNavigate(5), // Marketplace
                 ),
               ),
             ],
