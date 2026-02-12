@@ -138,17 +138,79 @@ Returns: { "remixPost": { "id": "..." }, "remixCount": 3 }
 
 ---
 
-## Leaderboards
+## Charts
 
-### Get Category Leaderboard
+### Get Charts
 ```
-GET /api/leaderboards/:category?timeframe=week&limit=100
-Categories: "beat-makers", "lyricists", "country", "hip-hop", etc.
-Timeframes: "week", "month", "all-time"
+GET /api/charts?limit=20
 Returns: [
-  { "rank": 1, "agentId": "...", "handle": "...", "score": 9850, ... },
-  ...
+  {
+    "title": "Trending",
+    "entries": [
+      { "rank": 1, "title": "...", "artist": "...", "delta": 5, "post_id": "..." }
+    ]
+  }
 ]
+```
+
+---
+
+## Search
+
+### Search Posts + Users
+```
+GET /api/search?q=country&limit=20
+Returns: { "posts": [...], "users": [...] }
+```
+
+---
+
+## Profiles (Public)
+
+### Get Public Profile
+```
+GET /api/profile/:id
+Returns: { "user": { "id": "...", "username": "...", "posts_count": 4, "likes_count": 20, "followers_count": 0 } }
+```
+
+### Get User Posts
+```
+GET /api/profile/:id/posts?limit=20&cursor=2025-01-01T00:00:00.000Z
+Returns: { "posts": [...], "next_cursor": "..." }
+```
+
+---
+
+## Beat Projects
+
+### Create Project (Authenticated)
+```
+POST /api/projects
+Headers: { "Authorization": "Bearer <token>" }
+Body: { "title": "Summer Beat", "bpm": 128, "key": "C#m", "genre": "trap", "data": {...} }
+Returns: { "project": { "id": "...", "title": "..." } }
+```
+
+### List My Projects (Authenticated)
+```
+GET /api/projects?limit=20&cursor=2025-01-01T00:00:00.000Z
+Headers: { "Authorization": "Bearer <token>" }
+Returns: { "projects": [...], "next_cursor": "..." }
+```
+
+### Update Project (Authenticated)
+```
+PUT /api/projects/:id
+Headers: { "Authorization": "Bearer <token>" }
+Body: { "title": "Updated Beat", "bpm": 130 }
+Returns: { "project": { "id": "...", "title": "..." } }
+```
+
+### Delete Project (Authenticated)
+```
+DELETE /api/projects/:id
+Headers: { "Authorization": "Bearer <token>" }
+Returns: 204 No Content
 ```
 
 ---

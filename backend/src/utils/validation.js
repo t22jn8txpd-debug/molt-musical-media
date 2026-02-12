@@ -110,3 +110,33 @@ export const notificationQuerySchema = z.object({
   limit: z.string().optional(),
   cursor: z.string().datetime().optional()
 });
+
+export const paginationSchema = z.object({
+  limit: z.string().optional(),
+  cursor: z.string().datetime().optional()
+});
+
+export const chartsQuerySchema = z.object({
+  limit: z.string().optional()
+});
+
+export const searchQuerySchema = z.object({
+  q: z.string().min(1).max(100),
+  limit: z.string().optional()
+});
+
+export const projectCreateSchema = z.object({
+  title: z.string().min(1).max(120),
+  bpm: z.number().min(40).max(240).optional(),
+  key: z.string().max(16).optional(),
+  genre: z.string().max(50).optional(),
+  data: z.record(z.any()).optional()
+});
+
+export const projectUpdateSchema = z.object({
+  title: z.string().min(1).max(120).optional(),
+  bpm: z.number().min(40).max(240).optional(),
+  key: z.string().max(16).optional(),
+  genre: z.string().max(50).optional(),
+  data: z.record(z.any()).optional()
+});

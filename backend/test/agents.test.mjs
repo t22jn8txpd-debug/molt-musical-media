@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import { findRoute, routeHasMiddleware } from "./helpers/routes.mjs";
 
 const require = createRequire(import.meta.url);
-const router = require("../src/routes/agents");
+const router = require("../src/routes/agents").default;
 const { authRequired } = require("../src/middleware/auth");
 
 describe("agent routes auth", () => {

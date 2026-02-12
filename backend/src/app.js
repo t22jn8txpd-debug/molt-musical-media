@@ -9,6 +9,9 @@ import agentRoutes from "./routes/agents.js";
 import profileRoutes from "./routes/profile.js";
 import postRoutes from "./routes/posts.js";
 import mediaRoutes from "./routes/media.js";
+import chartRoutes from "./routes/charts.js";
+import searchRoutes from "./routes/search.js";
+import projectRoutes from "./routes/projects.js";
 import notificationRoutes from "./routes/notifications.js";
 import webhookRoutes from "./routes/webhooks.js";
 
@@ -48,6 +51,9 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/webhooks", webhookLimiter, webhookRoutes);
 app.use("/api", postRoutes);
 app.use("/api", mediaRoutes);
+app.use("/api", chartRoutes);
+app.use("/api", searchRoutes);
+app.use("/api", projectRoutes);
 
 app.use((err, req, res, next) => {
   if (err?.name === "ZodError") {

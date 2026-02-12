@@ -35,7 +35,7 @@ router.post("/posts", authRequired, contentLimiter, async (req, res, next) => {
         original_post_id: null
       })
       .select(
-        "id,user_id,content_url,title,description,tags,likes_count,remixes_count,created_at,original_post_id"
+        "id,user_id,content_url,title,description,tags,likes_count,plays_count,remixes_count,created_at,original_post_id"
       )
       .single();
 
@@ -88,7 +88,7 @@ router.get("/feed", feedLimiter, async (req, res, next) => {
     let request = req.supabase
       .from("posts")
       .select(
-        "id,user_id,content_url,title,description,tags,likes_count,remixes_count,created_at,original_post_id,media:media(id,url,type,metadata)"
+        "id,user_id,content_url,title,description,tags,likes_count,plays_count,remixes_count,created_at,original_post_id,media:media(id,url,type,metadata)"
       )
       .order("created_at", { ascending: false })
       .limit(limit);
@@ -120,7 +120,7 @@ router.get("/posts/:id", async (req, res, next) => {
     const { data: post, error } = await req.supabase
       .from("posts")
       .select(
-        "id,user_id,content_url,title,description,tags,likes_count,remixes_count,created_at,original_post_id,media:media(id,url,type,metadata)"
+        "id,user_id,content_url,title,description,tags,likes_count,plays_count,remixes_count,created_at,original_post_id,media:media(id,url,type,metadata)"
       )
       .eq("id", postId)
       .single();
@@ -223,7 +223,7 @@ router.post("/posts/:id/remix", authRequired, contentLimiter, async (req, res, n
         original_post_id: postId
       })
       .select(
-        "id,user_id,content_url,title,description,tags,likes_count,remixes_count,created_at,original_post_id"
+        "id,user_id,content_url,title,description,tags,likes_count,plays_count,remixes_count,created_at,original_post_id"
       )
       .single();
 
