@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../../core/api/api_client.dart';
 import '../../core/api/api_endpoints.dart';
 import '../../core/storage/token_store.dart';
@@ -9,6 +11,7 @@ class AuthService {
   final TokenStore _tokenStore;
 
   Future<void> login({required String email, required String password}) async {
+    debugPrint('Auth login -> ${ApiEndpoints.login}');
     final response = await _client.dio.post(
       ApiEndpoints.login,
       data: {'email': email, 'password': password},
@@ -20,13 +23,15 @@ class AuthService {
   }
 
   Future<void> signup({
-    required String name,
+    required String username,
     required String email,
     required String password,
   }) async {
+    final payload = {'username': username, 'email': email, 'password': password};
+    debugPrint('Auth signup -> ${ApiEndpoints.signup} payload=$payload');
     final response = await _client.dio.post(
       ApiEndpoints.signup,
-      data: {'name': name, 'email': email, 'password': password},
+      data: payload,
     );
     final token = _extractToken(response.data);
     if (token != null) {

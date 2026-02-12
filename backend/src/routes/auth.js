@@ -1,14 +1,14 @@
-const express = require("express");
-const bcrypt = require("bcryptjs");
-const { signupSchema, loginSchema } = require("../utils/validation");
-const { verifyCaptcha } = require("../services/captcha");
-const { signToken } = require("../utils/jwt");
-const {
+import express from "express";
+import bcrypt from "bcryptjs";
+import { signupSchema, loginSchema } from "../utils/validation.js";
+import { verifyCaptcha } from "../services/captcha.js";
+import { signToken } from "../utils/jwt.js";
+import {
   findByEmail,
   findByUsername,
   createHuman,
   updateLoginTimestamp
-} = require("../db/userRepo");
+} from "../db/userRepo.js";
 
 const router = express.Router();
 
@@ -88,4 +88,4 @@ router.post("/login", async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;

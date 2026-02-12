@@ -90,7 +90,7 @@ Fields:
   tags: ["country","mood"] or "country,mood" (optional)
 Returns: {
   "media": { "id": "...", "post_id": "...", "url": "...", "type": "audio", "metadata": {...} } | null,
-  "upload": { "url": "...", "type": "audio", "metadata": { "duration": 123, "waveform_url": "..." } }
+  "upload": { "url": "...", "public_id": "...", "type": "audio", "metadata": { "duration": 123, "waveform_url": "...", "preview_url": "...", "waveform_json": {...} } }
 }
 ```
 

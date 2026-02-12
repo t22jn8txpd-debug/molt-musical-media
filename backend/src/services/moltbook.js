@@ -1,4 +1,4 @@
-const fetch = require("node-fetch");
+import fetch from "node-fetch";
 
 function extractPostId(postIdOrUrl) {
   try {
@@ -8,6 +8,33 @@ function extractPostId(postIdOrUrl) {
   } catch {
     return postIdOrUrl;
   }
+}
+
+async function fetchWithRetry(url, options, { retries = 3, baseDelayMs = 300 } = {}) {
+  let attempt = 0;
+  let lastError;
+  while (attempt <= retries) {
+    try {
+      const res = await fetch(url, options);
+      if (res.ok || (res.status >= 400 && res.status < 500)) {
+        return res;
+      }
+      lastError = new Error(`moltbook_http_${res.status}`);
+    } catch (err) {
+      lastError = err;
+    }
+
+    if (attempt === retries) {
+      break;
+    }
+
+    const jitter = Math.floor(Math.random() * 100);
+    const delay = baseDelayMs * 2 ** attempt + jitter;
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    attempt += 1;
+  }
+
+  throw lastError;
 }
 
 async function verifyMoltbookProof({ postIdOrUrl, verificationCode, moltbookHandle }) {
@@ -24,12 +51,26 @@ async function verifyMoltbookProof({ postIdOrUrl, verificationCode, moltbookHand
 
   const postId = extractPostId(postIdOrUrl);
   const url = `${baseUrl.replace(/\/$/, "")}/posts/${encodeURIComponent(postId)}`;
-  const res = await fetch(url, {
-    headers: {
-      "content-type": "application/json",
-      ...(process.env.MOLTBOOK_API_KEY ? { Authorization: `Bearer ${process.env.MOLTBOOK_API_KEY}` } : {})
-    }
-  });
+  let res;
+  try {
+    res = await fetchWithRetry(
+      url,
+      {
+        headers: {
+          "content-type": "application/json",
+          ...(process.env.MOLTBOOK_API_KEY
+            ? { Authorization: `Bearer ${process.env.MOLTBOOK_API_KEY}` }
+            : {})
+        }
+      },
+      {
+        retries: Number.parseInt(process.env.MOLTBOOK_RETRY_COUNT || "3", 10) || 3,
+        baseDelayMs: Number.parseInt(process.env.MOLTBOOK_RETRY_BASE_MS || "300", 10) || 300
+      }
+    );
+  } catch (err) {
+    return { ok: false, error: "moltbook_fetch_failed" };
+  }
 
   if (!res.ok) {
     return { ok: false, error: "moltbook_fetch_failed" };
@@ -50,4 +91,4 @@ async function verifyMoltbookProof({ postIdOrUrl, verificationCode, moltbookHand
   return { ok: true, postId };
 }
 
-module.exports = { verifyMoltbookProof };
+export { verifyMoltbookProof };

@@ -1,11 +1,4 @@
-import cloudinary from 'cloudinary';
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true
-});
+import cloudinary from "cloudinary";
 
 let configured = false;
 
@@ -41,7 +34,8 @@ export const uploadBuffer = async ({
   tags,
   uploadPreset,
   deliveryType,
-  eager
+  eager,
+  cacheControl
 }) => {
   ensureConfigured();
   return new Promise((resolve, reject) => {
@@ -52,10 +46,12 @@ export const uploadBuffer = async ({
         folder,
         tags,
         upload_preset: uploadPreset,
-        delivery_type: deliveryType && deliveryType !== "upload" ? deliveryType : undefined,
+        type: deliveryType && deliveryType !== "upload" ? deliveryType : undefined,
         use_filename: true,
         unique_filename: true,
-        filename_override: filename
+        filename_override: filename,
+        cache_control: cacheControl,
+        eager
       },
       (error, result) => {
         if (error) {
@@ -108,6 +104,21 @@ export const buildWaveformUrl = ({ publicId, version }) => {
         flags: "waveform",
         color: "white",
         background: "transparent"
+      }
+    ]
+  });
+};
+
+export const buildAudioPreviewUrl = ({ publicId, version }) => {
+  ensureConfigured();
+  return cloudinary.url(publicId, {
+    resource_type: "video",
+    secure: true,
+    version,
+    transformation: [
+      {
+        start_offset: 0,
+        duration: 30
       }
     ]
   });

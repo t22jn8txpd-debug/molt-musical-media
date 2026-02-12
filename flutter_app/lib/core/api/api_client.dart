@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../storage/token_store.dart';
 import 'api_config.dart';
@@ -12,6 +13,7 @@ class ApiClient {
             receiveTimeout: const Duration(seconds: 15),
           ),
         ) {
+    debugPrint('API baseUrl -> ${ApiConfig.baseUrl}');
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {

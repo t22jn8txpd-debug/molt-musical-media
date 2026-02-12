@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../app/theme.dart';
 
 class LoadingState extends StatelessWidget {
   const LoadingState({super.key, this.label});
@@ -11,10 +12,20 @@ class LoadingState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const CircularProgressIndicator(),
+          const SizedBox(
+            width: 40,
+            height: 40,
+            child: CircularProgressIndicator(
+              color: MoltColors.purple,
+              strokeWidth: 3,
+            ),
+          ),
           if (label != null) ...[
-            const SizedBox(height: 16),
-            Text(label!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70)),
+            const SizedBox(height: 18),
+            Text(
+              label!,
+              style: TextStyle(color: MoltColors.textMuted, fontSize: 14),
+            ),
           ],
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/services.dart';
+import '../../app/theme.dart';
 import '../../core/models/chart.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/loading_state.dart';
@@ -43,7 +44,8 @@ class _ChartsScreenState extends State<ChartsScreen> {
         if (categories.isEmpty) {
           return const EmptyState(
             title: 'No charts yet',
-            message: 'Charts will appear once rankings are published.',
+            message: 'Charts will appear once tracks start getting plays and likes.',
+            icon: Icons.leaderboard_rounded,
           );
         }
 
@@ -53,22 +55,25 @@ class _ChartsScreenState extends State<ChartsScreen> {
             children: [
               TabBar(
                 isScrollable: true,
+                indicatorColor: MoltColors.purple,
+                labelColor: MoltColors.purple,
+                unselectedLabelColor: MoltColors.textMuted,
                 tabs: [
-                  for (final category in categories) Tab(text: category.title),
+                  for (final cat in categories) Tab(text: cat.title),
                 ],
               ),
               Expanded(
                 child: RefreshIndicator(
+                  color: MoltColors.purple,
                   onRefresh: _refresh,
                   child: TabBarView(
                     children: [
-                      for (final category in categories)
+                      for (final cat in categories)
                         ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
-                          itemCount: category.entries.length,
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                          itemCount: cat.entries.length,
                           itemBuilder: (context, index) {
-                            final entry = category.entries[index];
-                            return _ChartRow(entry: entry);
+                            return _ChartRow(entry: cat.entries[index]);
                           },
                         ),
                     ],
@@ -92,51 +97,83 @@ class _ChartRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final delta = entry.delta ?? 0;
     final deltaColor = delta == 0
-        ? Colors.white60
+        ? MoltColors.textMuted
         : delta > 0
-            ? const Color(0xFF4DD7C8)
-            : const Color(0xFFF26B6B);
+            ? MoltColors.success
+            : MoltColors.error;
+
+    final isTop3 = entry.rank <= 3;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF151A24),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF222A36)),
+        gradient: isTop3 ? MoltColors.cardGradient : null,
+        color: isTop3 ? null : MoltColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isTop3
+              ? MoltColors.purple.withValues(alpha: 0.3)
+              : MoltColors.purple.withValues(alpha: 0.1),
+        ),
       ),
       child: Row(
         children: [
-          Text(
-            '#${entry.rank.toString().padLeft(2, '0')}',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+          // Rank
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              gradient: isTop3 ? MoltColors.purplePinkGradient : null,
+              color: isTop3 ? null : MoltColors.surfaceLight,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Center(
+              child: Text(
+                '${entry.rank}',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  color: isTop3 ? Colors.white : MoltColors.textMuted,
+                ),
+              ),
+            ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
+          // Track info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(entry.title, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 4),
+                Text(
+                  entry.title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 3),
                 Text(
                   entry.artist,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                  style: TextStyle(color: MoltColors.textMuted, fontSize: 12),
                 ),
               ],
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                delta == 0 ? '—' : (delta > 0 ? '+$delta' : '$delta'),
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(color: deltaColor),
+          // Delta
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: deltaColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              delta == 0 ? '—' : (delta > 0 ? '+$delta' : '$delta'),
+              style: TextStyle(
+                color: deltaColor,
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
               ),
-              const SizedBox(height: 4),
-              Text(
-                'change',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white38),
-              ),
-            ],
+            ),
           ),
         ],
       ),

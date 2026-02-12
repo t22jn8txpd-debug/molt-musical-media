@@ -15,6 +15,9 @@ dependencies:
   just_audio: ^0.9.46
   audio_waveforms: ^1.1.1
   google_fonts: ^6.2.1
+  shimmer: ^3.0.0
+  cached_network_image: ^3.3.1
+  file_picker: ^8.0.0
 
 dev_dependencies:
   flutter_test:

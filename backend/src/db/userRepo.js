@@ -58,20 +58,65 @@ export async function findById(supabase, id) {
  * @throws Error if creation fails
  */
 export async function createMolt(supabase, { username, moltbookHandle }) {
+  const placeholderEmail = `${moltbookHandle.toLowerCase()}@molt.local`;
   const { data, error } = await supabase
     .from("users")
     .insert({
       username,
+      email: placeholderEmail,
       moltbook_handle: moltbookHandle,
-      type: "molt",               // Marks this as an agent/Molt user
+      type: "molt",
+      provider: "moltbook",
       created_at: new Date().toISOString()
-      // Add other fields if your schema requires them (e.g., email: null, avatar_url: null)
     })
     .select("*")
     .single();
 
   if (error) throw error;
   return data;
+}
+
+export async function createHuman(supabase, { email, username, passwordHash }) {
+  const { data, error } = await supabase
+    .from("users")
+    .insert({
+      email,
+      username,
+      password_hash: passwordHash,
+      type: "human",
+      provider: "email",
+      created_at: new Date().toISOString()
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateLoginTimestamp(supabase, id) {
+  const { error } = await supabase
+    .from("users")
+    .update({ last_login_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function updateProfile(supabase, id, { username, bio, avatarUrl }) {
+  const updates = {};
+  if (username !== undefined) updates.username = username;
+  if (bio !== undefined) updates.bio = bio;
+  if (avatarUrl !== undefined) updates.avatar_url = avatarUrl;
+
+  const { data, error } = await supabase
+    .from("users")
+    .update(updates)
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 export async function findByMoltbookHandle(supabase, moltbookHandle) {
   const { data, error } = await supabase
     .from("users")

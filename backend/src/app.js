@@ -1,14 +1,16 @@
-const express = require("express");
-const helmet = require("helmet");
-const cors = require("cors");
-const { getSupabaseAdmin } = require("./db/supabase");
-const { authLimiter, agentLimiter } = require("./middleware/rateLimit");
-const { errorHandler } = require("./middleware/error");
-const authRoutes = require("./routes/auth");
-const agentRoutes = require("./routes/agents");
-const profileRoutes = require("./routes/profile");
-const postRoutes = require("./routes/posts");
-const mediaRoutes = require("./routes/media");
+import express from "express";
+import helmet from "helmet";
+import cors from "cors";
+import { getSupabaseAdmin } from "./db/supabase.js";
+import { authLimiter, agentLimiter, webhookLimiter } from "./middleware/rateLimit.js";
+import { errorHandler } from "./middleware/error.js";
+import authRoutes from "./routes/auth.js";
+import agentRoutes from "./routes/agents.js";
+import profileRoutes from "./routes/profile.js";
+import postRoutes from "./routes/posts.js";
+import mediaRoutes from "./routes/media.js";
+import notificationRoutes from "./routes/notifications.js";
+import webhookRoutes from "./routes/webhooks.js";
 
 const app = express();
 
@@ -42,6 +44,8 @@ app.get("/health", (req, res) => {
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/agents", agentLimiter, agentRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/webhooks", webhookLimiter, webhookRoutes);
 app.use("/api", postRoutes);
 app.use("/api", mediaRoutes);
 
@@ -54,4 +58,4 @@ app.use((err, req, res, next) => {
 
 app.use(errorHandler);
 
-module.exports = { app };
+export { app };

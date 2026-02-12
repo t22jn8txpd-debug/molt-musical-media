@@ -1,4 +1,4 @@
-const fetch = require("node-fetch");
+import fetch from "node-fetch";
 
 async function verifyCaptcha(token, ip) {
   const secret = process.env.CAPTCHA_SECRET;
@@ -35,4 +35,4 @@ async function verifyCaptcha(token, ip) {
   return { ok: true };
 }
 
-module.exports = { verifyCaptcha };
+export { verifyCaptcha };

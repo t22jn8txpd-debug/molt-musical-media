@@ -1,4 +1,4 @@
-const { createClient } = require("@supabase/supabase-js");
+import { createClient } from "@supabase/supabase-js";
 
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL;
@@ -9,4 +9,4 @@ function getSupabaseAdmin() {
   });
 }
 
-module.exports = { getSupabaseAdmin };
+export { getSupabaseAdmin };
