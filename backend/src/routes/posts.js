@@ -113,6 +113,86 @@ router.get("/feed", feedLimiter, async (req, res, next) => {
   }
 });
 
+// GET /api/posts/mine — current user's tracks
+router.get("/posts/mine", authRequired, async (req, res, next) => {
+  try {
+    const userId = req.user.sub;
+    const { data: posts, error } = await req.supabase
+      .from("posts")
+      .select(
+        "id,user_id,content_url,title,description,tags,likes_count,remixes_count,created_at,original_post_id,media:media(id,url,type,metadata)"
+      )
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      return res.status(500).json({ error: "db_error", details: error.message });
+    }
+
+    return res.status(200).json({ posts });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// GET /api/posts/user/:userId — a specific user's tracks
+router.get("/posts/user/:userId", async (req, res, next) => {
+  try {
+    const { data: posts, error } = await req.supabase
+      .from("posts")
+      .select(
+        "id,user_id,content_url,title,description,tags,likes_count,remixes_count,created_at,original_post_id,media:media(id,url,type,metadata)"
+      )
+      .eq("user_id", req.params.userId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      return res.status(500).json({ error: "db_error", details: error.message });
+    }
+
+    return res.status(200).json({ posts });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// GET /api/feed/following — personalized feed from followed users
+router.get("/feed/following", authRequired, feedLimiter, async (req, res, next) => {
+  try {
+    const userId = req.user.sub;
+
+    // Get followed user IDs
+    const { data: follows } = await req.supabase
+      .from("followers")
+      .select("following_id")
+      .eq("follower_id", userId);
+
+    const followedIds = (follows || []).map(f => f.following_id);
+    if (followedIds.length === 0) {
+      return res.status(200).json({ posts: [], next_cursor: null });
+    }
+
+    const { data: posts, error } = await req.supabase
+      .from("posts")
+      .select(
+        "id,user_id,content_url,title,description,tags,likes_count,remixes_count,created_at,original_post_id,media:media(id,url,type,metadata)"
+      )
+      .in("user_id", followedIds)
+      .order("created_at", { ascending: false })
+      .limit(30);
+
+    if (error) {
+      return res.status(500).json({ error: "db_error", details: error.message });
+    }
+
+    return res.status(200).json({ posts, next_cursor: posts?.at(-1)?.created_at || null });
+  } catch (err) {
+    return next(err);
+  }
+});
+
 router.get("/posts/:id", async (req, res, next) => {
   try {
     const postId = req.params.id;

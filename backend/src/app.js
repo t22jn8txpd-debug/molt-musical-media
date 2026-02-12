@@ -12,6 +12,7 @@ import mediaRoutes from "./routes/media.js";
 import notificationRoutes from "./routes/notifications.js";
 import webhookRoutes from "./routes/webhooks.js";
 import generateRoutes from "./routes/generate.js";
+import followRoutes from "./routes/follow.js";
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.get("/health", (req, res) => {
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/agents", agentLimiter, agentRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/profile", followRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/webhooks", webhookLimiter, webhookRoutes);
 app.use("/api/generate", contentLimiter, generateRoutes);
