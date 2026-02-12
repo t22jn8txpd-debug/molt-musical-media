@@ -96,7 +96,7 @@ class _HeroSection extends StatelessWidget {
                 width: 220,
                 child: _OutlineButton(
                   label: '💼 Explore Marketplace',
-                  onPressed: () => onNavigate(5), // Marketplace
+                  onPressed: () => onNavigate(6), // Marketplace
                 ),
               ),
             ],
