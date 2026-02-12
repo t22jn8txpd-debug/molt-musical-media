@@ -28,19 +28,16 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
 
   // Audio file
   String? _audioUrl;
-  String? _audioFileName;
   bool _isUploadingAudio = false;
   double _audioProgress = 0;
 
   // Video file
   String? _videoUrl;
-  String? _videoFileName;
   bool _isUploadingVideo = false;
   double _videoProgress = 0;
 
   // Cover art
   String? _coverUrl;
-  String? _coverFileName;
   bool _isUploadingCover = false;
 
   // Post

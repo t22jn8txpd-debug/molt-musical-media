@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../app/services.dart';
 import '../../app/theme.dart';
@@ -8,7 +7,6 @@ import '../auth/login_screen.dart';
 import '../home/home_screen.dart';
 import '../discover/discover_screen.dart';
 import '../charts/charts_screen.dart';
-import '../post/create_post_screen.dart';
 import '../marketplace/marketplace_screen.dart';
 import '../agents/agent_verify_screen.dart';
 import '../studio/studio_screen.dart';
