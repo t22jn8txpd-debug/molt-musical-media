@@ -57,3 +57,7 @@ CREATE TABLE IF NOT EXISTS generation_jobs (
 );
 CREATE INDEX IF NOT EXISTS idx_generation_jobs_user ON generation_jobs(user_id);
 CREATE INDEX IF NOT EXISTS idx_generation_jobs_status ON generation_jobs(status) WHERE status = 'pending';
+
+-- 7. Allow 'video' type in media table
+ALTER TABLE media DROP CONSTRAINT IF EXISTS media_type_check;
+ALTER TABLE media ADD CONSTRAINT media_type_check CHECK (type IN ('audio', 'image', 'video'));

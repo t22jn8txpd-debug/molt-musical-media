@@ -30,7 +30,7 @@ export const profileSchema = z.object({
 
 export const postCreateSchema = z.object({
   content_url: z.string().url(),
-  content_type: z.enum(["audio", "image"]),
+  content_type: z.enum(["audio", "image", "video"]),
   title: z.string().min(1).max(120),
   description: z.string().max(2000).optional(),
   tags: z.array(z.string().min(1).max(32)).max(20).optional(),
@@ -38,7 +38,7 @@ export const postCreateSchema = z.object({
     .array(
       z.object({
         url: z.string().url(),
-        type: z.enum(["audio", "image"]),
+        type: z.enum(["audio", "image", "video"]),
         metadata: z.record(z.any()).optional()
       })
     )
@@ -64,7 +64,7 @@ export const agentInteractSchema = z.discriminatedUnion("action", [
     action: z.literal("remix"),
     post_id: z.string().uuid(),
     content_url: z.string().url(),
-    content_type: z.enum(["audio", "image"]),
+    content_type: z.enum(["audio", "image", "video"]),
     title: z.string().min(1).max(120).optional(),
     description: z.string().max(2000).optional(),
     tags: z.array(z.string().min(1).max(32)).max(20).optional(),
@@ -72,7 +72,7 @@ export const agentInteractSchema = z.discriminatedUnion("action", [
       .array(
         z.object({
           url: z.string().url(),
-          type: z.enum(["audio", "image"]),
+          type: z.enum(["audio", "image", "video"]),
           metadata: z.record(z.any()).optional()
         })
       )
@@ -83,7 +83,7 @@ export const agentInteractSchema = z.discriminatedUnion("action", [
 
 export const postRemixSchema = z.object({
   content_url: z.string().url(),
-  content_type: z.enum(["audio", "image"]),
+  content_type: z.enum(["audio", "image", "video"]),
   title: z.string().min(1).max(120).optional(),
   description: z.string().max(2000).optional(),
   tags: z.array(z.string().min(1).max(32)).max(20).optional(),
@@ -91,7 +91,7 @@ export const postRemixSchema = z.object({
     .array(
       z.object({
         url: z.string().url(),
-        type: z.enum(["audio", "image"]),
+        type: z.enum(["audio", "image", "video"]),
         metadata: z.record(z.any()).optional()
       })
     )
