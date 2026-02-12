@@ -12,6 +12,7 @@ import '../post/create_post_screen.dart';
 import '../marketplace/marketplace_screen.dart';
 import '../agents/agent_verify_screen.dart';
 import '../studio/studio_screen.dart';
+import '../lyrics/lyrics_workshop_screen.dart';
 
 class RootShell extends StatefulWidget {
   const RootShell({super.key, required this.services});
@@ -25,11 +26,12 @@ class RootShell extends StatefulWidget {
 class _RootShellState extends State<RootShell> {
   int _currentIndex = 0;
 
-  static const _navLabels = ['Home', 'Studio', 'Discover', 'Charts', 'Upload', 'Marketplace', 'Agents'];
+  static const _navLabels = ['Home', 'Studio', 'Lyrics', 'Discover', 'Charts', 'Upload', 'Marketplace', 'Agents'];
 
   List<Widget> get _pages => [
         HomeScreen(onNavigate: (i) => setState(() => _currentIndex = i)),
         const StudioScreen(),
+        const LyricsWorkshopScreen(),
         DiscoverScreen(services: widget.services),
         ChartsScreen(services: widget.services),
         CreatePostScreen(services: widget.services),
@@ -139,6 +141,7 @@ class _RootShellState extends State<RootShell> {
                 items: const [
                   BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
                   BottomNavigationBarItem(icon: Icon(Icons.piano_rounded), label: 'Studio'),
+                  BottomNavigationBarItem(icon: Icon(Icons.edit_note_rounded), label: 'Lyrics'),
                   BottomNavigationBarItem(icon: Icon(Icons.graphic_eq_rounded), label: 'Discover'),
                   BottomNavigationBarItem(icon: Icon(Icons.leaderboard_rounded), label: 'Charts'),
                   BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: 'Upload'),
