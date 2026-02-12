@@ -1,5 +1,5 @@
-const { loadEnv } = require("./config/env");
-const { app } = require("./app");
+import { loadEnv } from "./config/env.js";
+import { app } from "./app.js";
 
 loadEnv();
 
