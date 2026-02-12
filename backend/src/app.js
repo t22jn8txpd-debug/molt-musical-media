@@ -2,7 +2,7 @@ import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import { getSupabaseAdmin } from "./db/supabase.js";
-import { authLimiter, agentLimiter, webhookLimiter } from "./middleware/rateLimit.js";
+import { authLimiter, agentLimiter, contentLimiter, webhookLimiter } from "./middleware/rateLimit.js";
 import { errorHandler } from "./middleware/error.js";
 import authRoutes from "./routes/auth.js";
 import agentRoutes from "./routes/agents.js";
@@ -11,6 +11,7 @@ import postRoutes from "./routes/posts.js";
 import mediaRoutes from "./routes/media.js";
 import notificationRoutes from "./routes/notifications.js";
 import webhookRoutes from "./routes/webhooks.js";
+import generateRoutes from "./routes/generate.js";
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use("/api/agents", agentLimiter, agentRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/webhooks", webhookLimiter, webhookRoutes);
+app.use("/api/generate", contentLimiter, generateRoutes);
 app.use("/api", postRoutes);
 app.use("/api", mediaRoutes);
 
