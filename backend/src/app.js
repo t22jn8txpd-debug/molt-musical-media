@@ -13,6 +13,7 @@ import notificationRoutes from "./routes/notifications.js";
 import webhookRoutes from "./routes/webhooks.js";
 import generateRoutes from "./routes/generate.js";
 import followRoutes from "./routes/follow.js";
+import lyricsRoutes from "./routes/lyrics.js";
 
 const app = express();
 
@@ -50,6 +51,7 @@ app.use("/api/profile", followRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/webhooks", webhookLimiter, webhookRoutes);
 app.use("/api/generate", contentLimiter, generateRoutes);
+app.use("/api/lyrics", lyricsRoutes);
 app.use("/api", postRoutes);
 app.use("/api", mediaRoutes);
 

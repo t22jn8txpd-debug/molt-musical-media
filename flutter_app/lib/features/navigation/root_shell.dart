@@ -13,6 +13,8 @@ import '../marketplace/marketplace_screen.dart';
 import '../agents/agent_verify_screen.dart';
 import '../studio/studio_screen.dart';
 import '../lyrics/lyrics_workshop_screen.dart';
+import '../profile/profile_screen.dart';
+import '../upload/upload_hub_screen.dart';
 
 class RootShell extends StatefulWidget {
   const RootShell({super.key, required this.services});
@@ -34,7 +36,7 @@ class _RootShellState extends State<RootShell> {
         const LyricsWorkshopScreen(),
         DiscoverScreen(services: widget.services),
         ChartsScreen(services: widget.services),
-        CreatePostScreen(services: widget.services),
+        UploadHubScreen(services: widget.services),
         const MarketplaceScreen(),
         AgentVerifyScreen(services: widget.services),
       ];
@@ -99,9 +101,17 @@ class _RootShellState extends State<RootShell> {
                       const Spacer(),
                       // Action buttons
                       _TopBarButton(
-                        label: 'Connect Wallet',
+                        label: '👤 Profile',
                         outlined: true,
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => Scaffold(
+                                body: ProfileScreen(services: widget.services),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(width: 8),
                       _TopBarButton(
