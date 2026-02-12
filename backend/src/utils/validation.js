@@ -110,3 +110,16 @@ export const notificationQuerySchema = z.object({
   limit: z.string().optional(),
   cursor: z.string().datetime().optional()
 });
+
+export const generateTrackSchema = z.object({
+  prompt: z.string().min(1).max(500),
+  genre: z.string().max(50).optional(),
+  mood: z.string().max(50).optional(),
+  duration_seconds: z.number().int().min(10).max(300).optional(),
+  instrumental: z.boolean().optional()
+});
+
+export const apiKeysUpdateSchema = z.object({
+  suno_key: z.string().min(1).max(256).optional(),
+  udio_key: z.string().min(1).max(256).optional()
+});
