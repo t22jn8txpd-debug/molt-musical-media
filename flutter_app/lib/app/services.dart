@@ -2,9 +2,9 @@ import '../core/api/api_client.dart';
 import '../core/storage/token_store.dart';
 
 class AppServices {
-  AppServices() {
-    tokenStore = const TokenStore();
-    apiClient = ApiClient(tokenStore);
+  AppServices({TokenStore? tokenStore, ApiClient? apiClient}) {
+    this.tokenStore = tokenStore ?? const TokenStore();
+    this.apiClient = apiClient ?? ApiClient(this.tokenStore);
   }
 
   late final TokenStore tokenStore;

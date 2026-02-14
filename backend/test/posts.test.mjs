@@ -1,10 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { createRequire } from "node:module";
 import { findRoute, routeHasMiddleware } from "./helpers/routes.mjs";
 
-const require = createRequire(import.meta.url);
-const router = require("../src/routes/posts");
-const { authRequired } = require("../src/middleware/auth");
+import router from "../src/routes/posts.js";
+import { authRequired } from "../src/middleware/auth.js";
 
 describe("posts endpoints auth", () => {
   it("protects create post", () => {

@@ -1,10 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { createRequire } from "node:module";
 import { findRoute, routeHasMiddleware } from "./helpers/routes.mjs";
 
-const require = createRequire(import.meta.url);
-const router = require("../src/routes/media");
-const { authRequired } = require("../src/middleware/auth");
+import router from "../src/routes/media.js";
+import { authRequired } from "../src/middleware/auth.js";
 
 describe("media routes auth", () => {
   it("protects upload", () => {
