@@ -135,4 +135,53 @@ router.delete("/drafts/:id", authRequired, async (req, res, next) => {
   }
 });
 
+// POST /api/lyrics/generate — AI lyrics generation
+const generateSchema = z.object({
+  topic: z.string().max(500),
+  genres: z.array(z.string()).optional(),
+  mood: z.string().max(50).optional(),
+});
+
+router.post("/generate", authRequired, async (req, res, next) => {
+  try {
+    const payload = generateSchema.parse(req.body);
+    const genre = payload.genres?.[0] || "pop";
+    const mood = payload.mood || "energetic";
+    const topic = sanitizeText(payload.topic, 500);
+
+    // Simple template-based lyrics generation (no external API needed)
+    const lyrics = [
+      `[Verse 1]`,
+      `Writing about ${topic}, feeling the ${mood} vibe`,
+      `In this ${genre} world, where we come alive`,
+      `Every word we speak is a brand new line`,
+      `Every beat we drop is a sign of the time`,
+      ``,
+      `[Chorus]`,
+      `${topic} on my mind, can't let it go`,
+      `The rhythm takes me places I want to know`,
+      `${topic} in my heart, feel it in my soul`,
+      `This ${genre} sound is making me whole`,
+      ``,
+      `[Verse 2]`,
+      `From the highs to the lows, we ride the wave`,
+      `Every moment counts, every word we gave`,
+      `The ${mood} energy keeps us moving on`,
+      `Until the break of dawn, we carry on`,
+      ``,
+      `[Bridge]`,
+      `Let the music speak what words cannot say`,
+      `In this moment right here, we find our way`,
+      ``,
+      `[Chorus]`,
+      `${topic} on my mind, can't let it go`,
+      `The rhythm takes me higher than before`,
+    ].join("\n");
+
+    return res.status(200).json({ lyrics });
+  } catch (err) {
+    return next(err);
+  }
+});
+
 export default router;

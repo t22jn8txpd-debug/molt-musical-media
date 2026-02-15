@@ -31,7 +31,7 @@ class _RootShellState extends State<RootShell> {
   List<Widget> get _pages => [
         HomeScreen(onNavigate: (i) => setState(() => _currentIndex = i)),
         StudioScreen(services: widget.services),
-        const LyricsWorkshopScreen(),
+        LyricsWorkshopScreen(services: widget.services),
         DiscoverScreen(services: widget.services),
         ChartsScreen(services: widget.services),
         UploadHubScreen(services: widget.services),

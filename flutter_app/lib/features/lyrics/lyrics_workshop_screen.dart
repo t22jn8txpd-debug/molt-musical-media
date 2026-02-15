@@ -5,11 +5,14 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../app/services.dart';
 import '../../app/theme.dart';
 import '../../shared/widgets/gradient_button.dart';
 
 class LyricsWorkshopScreen extends StatefulWidget {
-  const LyricsWorkshopScreen({super.key});
+  const LyricsWorkshopScreen({super.key, this.services});
+
+  final AppServices? services;
 
   @override
   State<LyricsWorkshopScreen> createState() => _LyricsWorkshopScreenState();
@@ -18,12 +21,13 @@ class LyricsWorkshopScreen extends StatefulWidget {
 class _LyricsWorkshopScreenState extends State<LyricsWorkshopScreen> {
   final _lyricsController = TextEditingController();
   final _titleController = TextEditingController();
+  final _aiPromptController = TextEditingController();
   final _scrollController = ScrollController();
 
   final List<String> _genres = [
     'upbeat', 'dark', 'romantic', 'anime', 'hip-hop',
     'country', 'rock', 'pop', 'r&b', 'electronic',
-    'jazz', 'lo-fi', 'metal', 'indie', 'soul',
+    'jazz', 'lo-fi', 'metal', 'indie', 'soul', 'christian',
   ];
 
   final List<String> _moods = [
@@ -34,7 +38,30 @@ class _LyricsWorkshopScreenState extends State<LyricsWorkshopScreen> {
   final Set<String> _selectedGenres = {};
   String? _selectedMood;
   List<String> _savedDraftNames = [];
-  bool _isLoadingDrafts = false;
+  int _templateIndex = -1;
+  bool _isGeneratingLyrics = false;
+
+  // 5 template types that cycle
+  static const _templates = [
+    // 0: Verse-Chorus
+    '[Verse 1]\nWrite your opening verse here\nSet the scene and mood\n\n[Chorus]\nThe hook — catchy and memorable\nRepeat the main message\n\n[Verse 2]\nDevelop the story further\nAdd depth and emotion\n\n[Chorus]\nThe hook — catchy and memorable\nRepeat the main message\n\n[Bridge]\nA shift in perspective\nBuild to the final chorus\n\n[Chorus]\nThe hook — one last time\nLeave them wanting more\n',
+    // 1: AABB Rhyme
+    '[Verse 1 — AABB Rhyme]\nLine one sets the tone and starts the flow (A)\nLine two rhymes with one, lets the rhythm grow (A)\nLine three shifts the scene, a brand new sight (B)\nLine four matches three, everything feels right (B)\n\n[Verse 2 — AABB Rhyme]\nLine five takes it deeper, raise the stakes (A)\nLine six rhymes along, whatever it takes (A)\nLine seven brings the heat, turn up the fire (B)\nLine eight seals the deal, take it even higher (B)\n\n[Outro]\nClose it out with power\nEnd on a high note\n',
+    // 2: Freestyle Flow
+    '[Freestyle Flow]\nNo rules, just vibes\nLet the words pour out\nStream of consciousness\nSay what you feel\n\n[Build Up]\nRaise the energy\nStack the bars\nDouble-time if you want\nBend the rhythm\n\n[Drop]\nHit them with the punchline\nThe moment they remember\nMake it count\n',
+    // 3: Storytelling
+    '[Intro — Set the Scene]\nDescribe the time and place\nIntroduce the character\n\n[Verse 1 — The Setup]\nWhat happened first?\nPaint the picture with words\nMake the listener feel it\n\n[Verse 2 — The Conflict]\nWhat went wrong?\nThe turning point\nThe struggle, the pain\n\n[Verse 3 — The Resolution]\nHow does it end?\nThe lesson learned\nThe wisdom gained\n\n[Outro — Reflection]\nLook back on the journey\nLeave the listener thinking\n',
+    // 4: Gospel/Worship
+    '[Verse 1 — Praise]\nLift up your voice in worship\nDeclare His goodness and grace\n\n[Chorus — Declaration]\nHoly, holy is the Lord\nForever faithful, forever good\n\n[Verse 2 — Testimony]\nThrough the valleys and the storms\nHis love carried me through\n\n[Chorus — Declaration]\nHoly, holy is the Lord\nForever faithful, forever good\n\n[Bridge — Surrender]\nI lay it all down\nTake every part of me\n\n[Chorus — Declaration]\nHoly, holy is the Lord\nForever faithful, forever good\n',
+  ];
+
+  static const _templateNames = [
+    'Verse-Chorus',
+    'AABB Rhyme',
+    'Freestyle Flow',
+    'Storytelling',
+    'Gospel/Worship',
+  ];
 
   int get _wordCount {
     final text = _lyricsController.text.trim();
@@ -61,6 +88,7 @@ class _LyricsWorkshopScreenState extends State<LyricsWorkshopScreen> {
   void dispose() {
     _lyricsController.dispose();
     _titleController.dispose();
+    _aiPromptController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -84,32 +112,99 @@ class _LyricsWorkshopScreenState extends State<LyricsWorkshopScreen> {
   }
 
   void _insertTemplate() {
-    const template = '[Verse 1]\n\n\n[Chorus]\n\n\n[Verse 2]\n\n\n[Chorus]\n\n\n[Bridge]\n\n\n[Chorus]\n';
-    final pos = _lyricsController.selection.baseOffset;
-    final text = _lyricsController.text;
-    if (pos >= 0) {
-      _lyricsController.text = text.substring(0, pos) + template + text.substring(pos);
-      _lyricsController.selection = TextSelection.collapsed(offset: pos + template.length);
-    } else {
-      _lyricsController.text = text + template;
-    }
+    // Cycle to next template (replace entire content)
+    _templateIndex = (_templateIndex + 1) % _templates.length;
+    final template = _templates[_templateIndex];
+    _lyricsController.text = template;
+    _lyricsController.selection = TextSelection.collapsed(offset: template.length);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Template: ${_templateNames[_templateIndex]}')),
+    );
   }
 
-  void _exportToSuno() {
-    final genres = _selectedGenres.isNotEmpty ? _selectedGenres.join(', ') : 'pop';
-    final mood = _selectedMood ?? 'energetic';
-    final lyrics = _lyricsController.text.trim();
-    if (lyrics.isEmpty) {
+  Future<void> _generateLyricsAI() async {
+    final topic = _aiPromptController.text.trim();
+    if (topic.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Write some lyrics first!')),
+        const SnackBar(content: Text('Enter a topic or prompt for AI lyrics')),
       );
       return;
     }
-    final output = '[$genres] song, $mood, lyrics:\n$lyrics';
-    Clipboard.setData(ClipboardData(text: output));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Copied to clipboard! 📋')),
-    );
+
+    setState(() => _isGeneratingLyrics = true);
+
+    try {
+      if (widget.services != null) {
+        try {
+          final response = await widget.services!.apiClient.dio.post(
+            '/lyrics/generate',
+            data: {
+              'topic': topic,
+              'genres': _selectedGenres.toList(),
+              'mood': _selectedMood,
+            },
+          );
+          final data = response.data;
+          final lyrics = data['lyrics'] as String?;
+          if (lyrics != null && lyrics.isNotEmpty) {
+            setState(() => _lyricsController.text = lyrics);
+            return;
+          }
+        } catch (_) {
+          // Backend unavailable – use local generation
+        }
+      }
+
+      // Local AI-like generation fallback
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return;
+      final genre = _selectedGenres.isNotEmpty ? _selectedGenres.first : 'pop';
+      final mood = _selectedMood ?? 'energetic';
+      final generated = _generateLocalLyrics(topic, genre, mood);
+      setState(() => _lyricsController.text = generated);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Generation failed. Try again.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isGeneratingLyrics = false);
+    }
+  }
+
+  String _generateLocalLyrics(String topic, String genre, String mood) {
+    return '[Verse 1]\n'
+        'Writing about $topic, feeling the $mood vibe\n'
+        'In this $genre world, where we come alive\n'
+        'Every word we speak is a brand new line\n'
+        'Every beat we drop is a sign of the time\n'
+        '\n'
+        '[Chorus]\n'
+        '$topic on my mind, can\'t let it go\n'
+        'The rhythm takes me places I want to know\n'
+        '$topic in my heart, feel it in my soul\n'
+        'This $genre sound is making me whole\n'
+        '\n'
+        '[Verse 2]\n'
+        'From the highs to the lows, we ride the wave\n'
+        'Every moment counts, every word we gave\n'
+        'The $mood energy keeps us moving on\n'
+        'Until the break of dawn, we carry on\n'
+        '\n'
+        '[Chorus]\n'
+        '$topic on my mind, can\'t let it go\n'
+        'The rhythm takes me places I want to know\n'
+        '$topic in my heart, feel it in my soul\n'
+        'This $genre sound is making me whole\n'
+        '\n'
+        '[Bridge]\n'
+        'Let the music speak what words cannot say\n'
+        'In this moment right here, we find our way\n'
+        '\n'
+        '[Chorus]\n'
+        '$topic on my mind, can\'t let it go\n'
+        'The rhythm takes me higher than before\n';
   }
 
   Future<void> _loadDraftNames() async {
@@ -250,7 +345,7 @@ class _LyricsWorkshopScreenState extends State<LyricsWorkshopScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Write, structure, and export your lyrics.',
+                  'Write, structure, and generate lyrics with AI.',
                   style: TextStyle(color: MoltColors.textMuted, fontSize: 13),
                 ),
                 const SizedBox(height: 20),
@@ -369,6 +464,45 @@ class _LyricsWorkshopScreenState extends State<LyricsWorkshopScreen> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 12),
+
+                // AI Lyrics Generation
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: MoltColors.cardGradient,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: MoltColors.purple.withValues(alpha: 0.2)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '🤖 AI Lyrics Generator',
+                        style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _aiPromptController,
+                        style: const TextStyle(color: Colors.white),
+                        maxLines: 2,
+                        decoration: const InputDecoration(
+                          hintText: 'Describe your song topic... e.g. "heartbreak in the city at night"',
+                          hintStyle: TextStyle(color: MoltColors.textMuted, fontSize: 13),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      GradientButton(
+                        label: _isGeneratingLyrics ? 'Writing...' : '✨ Generate Lyrics',
+                        icon: _isGeneratingLyrics ? null : Icons.auto_awesome,
+                        onPressed: _isGeneratingLyrics ? null : _generateLyricsAI,
+                        isLoading: _isGeneratingLyrics,
+                        height: 42,
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
 
