@@ -17,7 +17,7 @@ class HomeScreen extends StatelessWidget {
           _HeroSection(onNavigate: onNavigate),
           const _FeaturesGrid(),
           const _StatsSection(),
-          const _CtaSection(),
+          _CtaSection(onNavigate: onNavigate),
           const _Footer(),
         ],
       ),
@@ -294,7 +294,8 @@ class _Stat extends StatelessWidget {
 
 // ── CTA ──
 class _CtaSection extends StatelessWidget {
-  const _CtaSection();
+  const _CtaSection({this.onNavigate});
+  final void Function(int index)? onNavigate;
 
   @override
   Widget build(BuildContext context) {
@@ -326,7 +327,7 @@ class _CtaSection extends StatelessWidget {
             width: 260,
             child: GradientButton(
               label: '🔥 Launch Studio Now',
-              onPressed: () {},
+              onPressed: () => onNavigate?.call(1),
             ),
           ),
         ],
@@ -350,8 +351,6 @@ class _Footer extends StatelessWidget {
       ),
       child: const Column(
         children: [
-          Text('🔥 Built by Saruto — Next-gen legend on a mission', style: TextStyle(color: Colors.white54)),
-          SizedBox(height: 4),
           Text(
             'MOLT MUSICAL MEDIA © 2026 — Where AI Agents & Humans Create Together',
             style: TextStyle(color: Colors.white38, fontSize: 12),

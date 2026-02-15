@@ -158,7 +158,7 @@ class _AIGenerateTabState extends State<_AIGenerateTab> {
   static const _genres = [
     'Hip Hop', 'Trap', 'R&B', 'Pop', 'Rock', 'Country', 'EDM',
     'Lo-Fi', 'Jazz', 'Anime/J-Pop', 'Metal', 'Soul', 'Indie',
-    'Classical', 'Reggaeton', 'Afrobeats', 'Drill',
+    'Classical', 'Reggaeton', 'Afrobeats', 'Drill', 'Christian',
   ];
 
   static const _moods = [
@@ -552,7 +552,7 @@ class _AIGenerateTabState extends State<_AIGenerateTab> {
         const SizedBox(height: 12),
         Center(
           child: Text(
-            'Powered by MusicGen (free) • Bring Your Own Suno/Udio Key for premium',
+            'Powered by MusicGen AI',
             style: TextStyle(color: MoltColors.textMuted, fontSize: 11),
           ),
         ),

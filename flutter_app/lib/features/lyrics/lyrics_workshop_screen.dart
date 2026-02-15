@@ -368,15 +368,6 @@ class _LyricsWorkshopScreenState extends State<LyricsWorkshopScreen> {
                         gradient: MoltColors.purpleBlueGradient,
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: GradientButton(
-                        label: 'Export to Suno',
-                        icon: Icons.copy,
-                        onPressed: _exportToSuno,
-                        height: 40,
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
