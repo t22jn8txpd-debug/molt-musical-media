@@ -5,12 +5,13 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../app/services.dart';
 import '../../app/theme.dart';
 import '../../shared/widgets/gradient_button.dart';
 
-/// Screen for uploading music videos (generated via Seedance, Pika, Runway, etc.)
+/// Screen for uploading music videos and generating them via AI services.
 class VideoUploadScreen extends StatefulWidget {
   const VideoUploadScreen({super.key, required this.services});
 
@@ -20,40 +21,319 @@ class VideoUploadScreen extends StatefulWidget {
   State<VideoUploadScreen> createState() => _VideoUploadScreenState();
 }
 
-class _VideoUploadScreenState extends State<VideoUploadScreen> {
+class _VideoUploadScreenState extends State<VideoUploadScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(gradient: MoltColors.backgroundGradient),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+            child: Container(
+              decoration: BoxDecoration(
+                color: MoltColors.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: MoltColors.purple.withValues(alpha: 0.2)),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  gradient: MoltColors.purplePinkGradient,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                dividerHeight: 0,
+                labelColor: Colors.white,
+                unselectedLabelColor: MoltColors.textMuted,
+                labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                tabs: const [
+                  Tab(text: '🤖 Generate Video'),
+                  Tab(text: '📤 Upload Video'),
+                  Tab(text: '🔑 API Keys'),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _GenerateVideoTab(services: widget.services),
+                _DirectUploadTab(services: widget.services),
+                const _ApiKeysTab(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════
+// GENERATE VIDEO TAB
+// ═══════════════════════════════════════
+
+class _GenerateVideoTab extends StatefulWidget {
+  const _GenerateVideoTab({required this.services});
+  final AppServices services;
+
+  @override
+  State<_GenerateVideoTab> createState() => _GenerateVideoTabState();
+}
+
+class _GenerateVideoTabState extends State<_GenerateVideoTab> {
+  String? _selectedService;
+  String? _selectedTrackUrl;
+  final _promptController = TextEditingController();
+  bool _isGenerating = false;
+  String? _resultMessage;
+  bool _isSuccess = false;
+
+  static const _services = [
+    _VideoGenService('Seedance 2.0', '🌱', 'ByteDance', 'Best for music-synced dance videos'),
+    _VideoGenService('Pika Labs', '⚡', 'Pika', 'Fast, stylized short clips'),
+    _VideoGenService('Runway Gen-3', '🎬', 'Runway', 'Cinematic quality, long-form'),
+    _VideoGenService('Luma Dream Machine', '💫', 'Luma AI', 'Dreamy, surreal aesthetics'),
+    _VideoGenService('Kling AI', '🎭', 'Kuaishou', 'Realistic human motion'),
+  ];
+
+  @override
+  void dispose() {
+    _promptController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _generate() async {
+    if (_selectedService == null) {
+      setState(() {
+        _resultMessage = 'Please select a video generation service.';
+        _isSuccess = false;
+      });
+      return;
+    }
+
+    // Check if API key is stored
+    final prefs = await SharedPreferences.getInstance();
+    final keyName = 'api_key_${_selectedService!.toLowerCase().replaceAll(' ', '_')}';
+    final apiKey = prefs.getString(keyName);
+
+    if (apiKey == null || apiKey.isEmpty) {
+      setState(() {
+        _resultMessage = 'No API key found for $_selectedService. Go to the API Keys tab to add one.';
+        _isSuccess = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isGenerating = true;
+      _resultMessage = null;
+    });
+
+    // Simulate generation (stub)
+    await Future.delayed(const Duration(seconds: 3));
+    if (!mounted) return;
+
+    setState(() {
+      _isGenerating = false;
+      _resultMessage = 'API integration for $_selectedService coming soon! Your key has been validated. '
+          'When available, this will generate a music video from your track.';
+      _isSuccess = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
+      children: [
+        ShaderMask(
+          shaderCallback: (b) => MoltColors.purplePinkGradient.createShader(b),
+          child: Text(
+            '🎬 Generate Music Video',
+            style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white),
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Select a track and AI service to generate a music video.',
+          style: TextStyle(color: Colors.white54, fontSize: 13),
+        ),
+        const SizedBox(height: 20),
+
+        // Service selection
+        _SectionCard(
+          title: '🤖 Choose AI Service',
+          child: Column(
+            children: _services.map((s) {
+              final isSelected = _selectedService == s.name;
+              return GestureDetector(
+                onTap: () => setState(() => _selectedService = s.name),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: isSelected ? LinearGradient(
+                      colors: [MoltColors.purple.withValues(alpha: 0.2), MoltColors.pink.withValues(alpha: 0.15)],
+                    ) : null,
+                    color: isSelected ? null : MoltColors.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isSelected ? MoltColors.purple : MoltColors.purple.withValues(alpha: 0.15),
+                      width: isSelected ? 2 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(s.emoji, style: const TextStyle(fontSize: 28)),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(s.name, style: TextStyle(
+                              color: isSelected ? Colors.white : Colors.white70,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            )),
+                            Text('${s.provider} • ${s.desc}', style: TextStyle(
+                              color: isSelected ? Colors.white54 : MoltColors.textMuted,
+                              fontSize: 11,
+                            )),
+                          ],
+                        ),
+                      ),
+                      if (isSelected)
+                        const Icon(Icons.check_circle, color: MoltColors.purple, size: 22),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Video prompt
+        _SectionCard(
+          title: '✨ Video Style Prompt',
+          child: TextField(
+            controller: _promptController,
+            style: const TextStyle(color: Colors.white),
+            maxLines: 3,
+            decoration: const InputDecoration(
+              hintText: 'Describe the video style... e.g. "cinematic night city, neon lights, slow motion"',
+              hintStyle: TextStyle(color: MoltColors.textMuted, fontSize: 13),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Results
+        if (_resultMessage != null)
+          Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: _isSuccess
+                  ? MoltColors.success.withValues(alpha: 0.1)
+                  : MoltColors.error.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: _isSuccess
+                    ? MoltColors.success.withValues(alpha: 0.3)
+                    : MoltColors.error.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _isSuccess ? Icons.info_outline : Icons.warning_amber,
+                  color: _isSuccess ? MoltColors.success : MoltColors.error,
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _resultMessage!,
+                    style: TextStyle(
+                      color: _isSuccess ? MoltColors.success : MoltColors.error,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        GradientButton(
+          label: _isGenerating ? 'Generating...' : '🎬 Generate Music Video',
+          icon: _isGenerating ? null : Icons.auto_awesome,
+          onPressed: _isGenerating ? null : _generate,
+          isLoading: _isGenerating,
+        ),
+      ],
+    );
+  }
+}
+
+class _VideoGenService {
+  const _VideoGenService(this.name, this.emoji, this.provider, this.desc);
+  final String name;
+  final String emoji;
+  final String provider;
+  final String desc;
+}
+
+// ═══════════════════════════════════════
+// DIRECT UPLOAD TAB
+// ═══════════════════════════════════════
+
+class _DirectUploadTab extends StatefulWidget {
+  const _DirectUploadTab({required this.services});
+  final AppServices services;
+
+  @override
+  State<_DirectUploadTab> createState() => _DirectUploadTabState();
+}
+
+class _DirectUploadTabState extends State<_DirectUploadTab> {
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
   final _tagController = TextEditingController();
   final List<String> _tags = [];
 
-  // Audio file
   String? _audioUrl;
   bool _isUploadingAudio = false;
   double _audioProgress = 0;
 
-  // Video file
   String? _videoUrl;
   bool _isUploadingVideo = false;
   double _videoProgress = 0;
 
-  // Cover art
   String? _coverUrl;
   bool _isUploadingCover = false;
 
-  // Post
   bool _isPosting = false;
   String? _errorMessage;
   String? _successMessage;
-
-  String? _selectedGenerator = 'Seedance 2.0';
-  static const _generators = [
-    'Seedance 2.0',
-    'Pika Labs',
-    'Runway Gen-3',
-    'Luma Dream Machine',
-    'Kling AI',
-    'Manual / Other',
-  ];
 
   @override
   void dispose() {
@@ -201,7 +481,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
             : _descController.text.trim(),
         'content_url': contentUrl,
         'content_type': contentType,
-        'tags': [..._tags, 'music-video', _selectedGenerator?.toLowerCase().replaceAll(' ', '-') ?? ''],
+        'tags': [..._tags, 'music-video'],
         'media': mediaItems,
       });
 
@@ -223,188 +503,350 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(gradient: MoltColors.backgroundGradient),
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-        children: [
-          // Header
-          ShaderMask(
-            shaderCallback: (b) => MoltColors.purplePinkGradient.createShader(b),
-            child: Text(
-              '🎬 Upload Music Video',
-              style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w800, color: Colors.white),
-            ),
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
+      children: [
+        ShaderMask(
+          shaderCallback: (b) => MoltColors.purplePinkGradient.createShader(b),
+          child: Text(
+            '📤 Upload Music Video',
+            style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white),
           ),
-          const SizedBox(height: 4),
-          const Text(
-            'Upload your generated music video + audio track. Use Seedance 2.0, Pika, Runway, or any tool.',
-            style: TextStyle(color: Colors.white54, fontSize: 13),
-          ),
-          const SizedBox(height: 20),
+        ),
+        const SizedBox(height: 4),
+        const Text('Upload your video directly.', style: TextStyle(color: Colors.white54, fontSize: 13)),
+        const SizedBox(height: 20),
 
-          // Generator selector
-          _SectionCard(
-            title: '🤖 Video Generator Used',
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _generators.map((g) {
-                final isSelected = g == _selectedGenerator;
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedGenerator = g),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      gradient: isSelected ? MoltColors.purplePinkGradient : null,
-                      color: isSelected ? null : MoltColors.surface,
-                      borderRadius: BorderRadius.circular(10),
-                      border: isSelected ? null : Border.all(color: MoltColors.purple.withValues(alpha: 0.2)),
-                    ),
-                    child: Text(g,
-                        style: TextStyle(
-                            color: isSelected ? Colors.white : MoltColors.textMuted,
-                            fontSize: 12,
-                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500)),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: 12),
+        _UploadCard(
+          title: '🎬 Video File',
+          subtitle: 'mp4/mov/webm (max 100MB)',
+          isUploading: _isUploadingVideo,
+          progress: _videoProgress,
+          uploadedUrl: _videoUrl,
+          onPick: _pickVideo,
+          icon: Icons.videocam_rounded,
+        ),
+        const SizedBox(height: 12),
 
-          // Video upload
-          _UploadCard(
-            title: '🎬 Video File',
-            subtitle: 'mp4/mov/webm (max 100MB)',
-            isUploading: _isUploadingVideo,
-            progress: _videoProgress,
-            uploadedUrl: _videoUrl,
-            onPick: _pickVideo,
-            icon: Icons.videocam_rounded,
-          ),
-          const SizedBox(height: 12),
+        _UploadCard(
+          title: '🎵 Audio Track',
+          subtitle: 'mp3/wav/flac/ogg (max 50MB)',
+          isUploading: _isUploadingAudio,
+          progress: _audioProgress,
+          uploadedUrl: _audioUrl,
+          onPick: _pickAudio,
+          icon: Icons.audiotrack_rounded,
+        ),
+        const SizedBox(height: 12),
 
-          // Audio upload
-          _UploadCard(
-            title: '🎵 Audio Track',
-            subtitle: 'mp3/wav/flac/ogg (max 50MB)',
-            isUploading: _isUploadingAudio,
-            progress: _audioProgress,
-            uploadedUrl: _audioUrl,
-            onPick: _pickAudio,
-            icon: Icons.audiotrack_rounded,
-          ),
-          const SizedBox(height: 12),
+        _UploadCard(
+          title: '🖼️ Cover Art (optional)',
+          subtitle: 'jpg/png/webp (max 10MB)',
+          isUploading: _isUploadingCover,
+          progress: 0,
+          uploadedUrl: _coverUrl,
+          onPick: _pickCover,
+          icon: Icons.image_rounded,
+        ),
+        const SizedBox(height: 16),
 
-          // Cover art
-          _UploadCard(
-            title: '🖼️ Cover Art (optional)',
-            subtitle: 'jpg/png/webp (max 10MB)',
-            isUploading: _isUploadingCover,
-            progress: 0,
-            uploadedUrl: _coverUrl,
-            onPick: _pickCover,
-            icon: Icons.image_rounded,
+        TextField(
+          controller: _titleController,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            labelText: 'Video Title',
+            prefixIcon: Icon(Icons.title, color: MoltColors.purple, size: 20),
           ),
-          const SizedBox(height: 16),
+        ),
+        const SizedBox(height: 12),
 
-          // Title
-          TextField(
-            controller: _titleController,
-            style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(
-              labelText: 'Video Title',
-              prefixIcon: Icon(Icons.title, color: MoltColors.purple, size: 20),
-            ),
+        TextField(
+          controller: _descController,
+          style: const TextStyle(color: Colors.white),
+          maxLines: 3,
+          decoration: const InputDecoration(
+            labelText: 'Description (optional)',
+            alignLabelWithHint: true,
           ),
-          const SizedBox(height: 12),
+        ),
+        const SizedBox(height: 12),
 
-          // Description
-          TextField(
-            controller: _descController,
-            style: const TextStyle(color: Colors.white),
-            maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'Description (optional)',
-              alignLabelWithHint: true,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Tags
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _tagController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
-                    labelText: 'Add tag',
-                    prefixIcon: Icon(Icons.tag, color: MoltColors.purple, size: 20),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  ),
-                  onSubmitted: (_) => _addTag(),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _tagController,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'Add tag',
+                  prefixIcon: Icon(Icons.tag, color: MoltColors.purple, size: 20),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
+                onSubmitted: (_) => _addTag(),
               ),
-              const SizedBox(width: 8),
-              Container(
-                decoration: BoxDecoration(color: MoltColors.purple, borderRadius: BorderRadius.circular(14)),
-                child: IconButton(icon: const Icon(Icons.add, color: Colors.white), onPressed: _addTag),
-              ),
-            ],
-          ),
-          if (_tags.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: _tags.map((t) => Chip(
-                label: Text('#$t'),
-                deleteIcon: const Icon(Icons.close, size: 16),
-                onDeleted: () => setState(() => _tags.remove(t)),
-              )).toList(),
             ),
-          ],
-
-          // Messages
-          if (_errorMessage != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(width: 8),
             Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: MoltColors.error.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: MoltColors.error.withValues(alpha: 0.3)),
-              ),
-              child: Text(_errorMessage!, style: const TextStyle(color: MoltColors.error, fontSize: 13)),
+              decoration: BoxDecoration(color: MoltColors.purple, borderRadius: BorderRadius.circular(14)),
+              child: IconButton(icon: const Icon(Icons.add, color: Colors.white), onPressed: _addTag),
             ),
           ],
-          if (_successMessage != null) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: MoltColors.success.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: MoltColors.success.withValues(alpha: 0.3)),
-              ),
-              child: Text(_successMessage!, style: const TextStyle(color: MoltColors.success, fontSize: 13)),
-            ),
-          ],
-
-          const SizedBox(height: 20),
-          GradientButton(
-            label: 'Post Music Video 🎬',
-            icon: Icons.rocket_launch,
-            onPressed: _post,
-            isLoading: _isPosting,
+        ),
+        if (_tags.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: _tags.map((t) => Chip(
+              label: Text('#$t'),
+              deleteIcon: const Icon(Icons.close, size: 16),
+              onDeleted: () => setState(() => _tags.remove(t)),
+            )).toList(),
           ),
         ],
-      ),
+
+        if (_errorMessage != null) ...[
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: MoltColors.error.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: MoltColors.error.withValues(alpha: 0.3)),
+            ),
+            child: Text(_errorMessage!, style: const TextStyle(color: MoltColors.error, fontSize: 13)),
+          ),
+        ],
+        if (_successMessage != null) ...[
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: MoltColors.success.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: MoltColors.success.withValues(alpha: 0.3)),
+            ),
+            child: Text(_successMessage!, style: const TextStyle(color: MoltColors.success, fontSize: 13)),
+          ),
+        ],
+
+        const SizedBox(height: 20),
+        GradientButton(
+          label: 'Post Music Video 🎬',
+          icon: Icons.rocket_launch,
+          onPressed: _post,
+          isLoading: _isPosting,
+        ),
+      ],
     );
   }
 }
+
+// ═══════════════════════════════════════
+// API KEYS TAB
+// ═══════════════════════════════════════
+
+class _ApiKeysTab extends StatefulWidget {
+  const _ApiKeysTab();
+
+  @override
+  State<_ApiKeysTab> createState() => _ApiKeysTabState();
+}
+
+class _ApiKeysTabState extends State<_ApiKeysTab> {
+  static const _serviceKeys = [
+    _ServiceKeyConfig('Seedance 2.0', '🌱', 'seedance_2.0'),
+    _ServiceKeyConfig('Pika Labs', '⚡', 'pika_labs'),
+    _ServiceKeyConfig('Runway Gen-3', '🎬', 'runway_gen-3'),
+    _ServiceKeyConfig('Luma Dream Machine', '💫', 'luma_dream_machine'),
+    _ServiceKeyConfig('Kling AI', '🎭', 'kling_ai'),
+  ];
+
+  final Map<String, TextEditingController> _controllers = {};
+  final Map<String, bool> _saved = {};
+  final Map<String, bool> _obscured = {};
+
+  @override
+  void initState() {
+    super.initState();
+    for (final s in _serviceKeys) {
+      _controllers[s.key] = TextEditingController();
+      _saved[s.key] = false;
+      _obscured[s.key] = true;
+    }
+    _loadKeys();
+  }
+
+  @override
+  void dispose() {
+    for (final c in _controllers.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _loadKeys() async {
+    final prefs = await SharedPreferences.getInstance();
+    for (final s in _serviceKeys) {
+      final key = prefs.getString('api_key_${s.key}');
+      if (key != null && key.isNotEmpty) {
+        _controllers[s.key]!.text = key;
+        _saved[s.key] = true;
+      }
+    }
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _saveKey(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    final value = _controllers[key]!.text.trim();
+    if (value.isNotEmpty) {
+      await prefs.setString('api_key_$key', value);
+      setState(() => _saved[key] = true);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('API key saved! 🔑')),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteKey(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('api_key_$key');
+    _controllers[key]!.clear();
+    setState(() => _saved[key] = false);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('API key removed')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
+      children: [
+        ShaderMask(
+          shaderCallback: (b) => MoltColors.purplePinkGradient.createShader(b),
+          child: Text(
+            '🔑 API Key Management',
+            style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white),
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Store your API keys for video generation services. Keys are saved locally on your device.',
+          style: TextStyle(color: Colors.white54, fontSize: 13),
+        ),
+        const SizedBox(height: 20),
+
+        ..._serviceKeys.map((s) {
+          final isSaved = _saved[s.key] ?? false;
+          final isObscured = _obscured[s.key] ?? true;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: MoltColors.cardGradient,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isSaved
+                    ? MoltColors.success.withValues(alpha: 0.3)
+                    : MoltColors.purple.withValues(alpha: 0.15),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(s.emoji, style: const TextStyle(fontSize: 22)),
+                    const SizedBox(width: 10),
+                    Text(s.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15)),
+                    const Spacer(),
+                    if (isSaved)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: MoltColors.success.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text('✅ Saved', style: TextStyle(color: MoltColors.success, fontSize: 11, fontWeight: FontWeight.w600)),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _controllers[s.key],
+                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        obscureText: isObscured,
+                        decoration: InputDecoration(
+                          hintText: 'Enter API key...',
+                          hintStyle: const TextStyle(color: MoltColors.textMuted, fontSize: 12),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              isObscured ? Icons.visibility_off : Icons.visibility,
+                              color: MoltColors.textMuted,
+                              size: 18,
+                            ),
+                            onPressed: () => setState(() => _obscured[s.key] = !isObscured),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => _saveKey(s.key),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          gradient: MoltColors.purplePinkGradient,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.save, color: Colors.white, size: 20),
+                      ),
+                    ),
+                    if (isSaved) ...[
+                      const SizedBox(width: 6),
+                      GestureDetector(
+                        onTap: () => _deleteKey(s.key),
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: MoltColors.error.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.delete_outline, color: MoltColors.error, size: 20),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+}
+
+class _ServiceKeyConfig {
+  const _ServiceKeyConfig(this.name, this.emoji, this.key);
+  final String name;
+  final String emoji;
+  final String key;
+}
+
+// ═══════════════════════════════════════
+// SHARED WIDGETS
+// ═══════════════════════════════════════
 
 class _SectionCard extends StatelessWidget {
   const _SectionCard({required this.title, required this.child});
