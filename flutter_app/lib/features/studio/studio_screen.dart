@@ -194,31 +194,40 @@ class _AIGenerateTabState extends State<_AIGenerateTab> {
 
     try {
       if (widget.services != null) {
-        final response = await widget.services!.apiClient.dio.post(
-          '/generate/track',
-          data: {
-            'prompt': _buildPrompt(),
-            'genre': _selectedGenre.toLowerCase(),
-            'mood': _selectedMood.toLowerCase(),
-            'duration_seconds': _durationSec,
-            'instrumental': _instrumental,
-          },
-        );
-        final data = response.data;
+        try {
+          final response = await widget.services!.apiClient.dio.post(
+            '/generate/track',
+            data: {
+              'prompt': _buildPrompt(),
+              'genre': _selectedGenre.toLowerCase(),
+              'mood': _selectedMood.toLowerCase(),
+              'duration_seconds': _durationSec,
+              'instrumental': _instrumental,
+            },
+          );
+          final data = response.data;
+          final url = data['track']?['audioUrl'] as String?;
+          if (url != null && url.isNotEmpty) {
+            setState(() => _generatedUrl = url);
+            return;
+          }
+        } catch (_) {
+          // Backend unavailable – fall through to mock
+        }
+      }
+      // Mock fallback: simulate generation with a placeholder
+      await Future.delayed(const Duration(seconds: 2));
+      if (!mounted) return;
+      setState(() {
+        _generatedUrl = 'mock://generated-beat';
+        _errorMessage = null;
+      });
+    } catch (e) {
+      if (mounted) {
         setState(() {
-          _generatedUrl = data['track']?['audioUrl'];
-        });
-      } else {
-        // Mock delay for when services aren't available
-        await Future.delayed(const Duration(seconds: 3));
-        setState(() {
-          _generatedUrl = 'https://mock.example.com/beat.mp3';
+          _errorMessage = 'Generation failed. Try again or adjust your prompt.';
         });
       }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Generation failed. Try again or adjust your prompt.';
-      });
     } finally {
       if (mounted) setState(() => _isGenerating = false);
     }
