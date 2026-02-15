@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../app/services.dart';
 import '../../app/theme.dart';
 import '../../shared/widgets/gradient_button.dart';
+import 'web_audio_helper.dart';
 
 class StudioScreen extends StatefulWidget {
   const StudioScreen({super.key, this.services});
@@ -592,22 +594,31 @@ class _SequencerTabState extends State<_SequencerTab> {
   Timer? _playTimer;
   bool _isPlaying = false;
   double _bpm = 120;
+  WebAudioEngine? _audioEngine;
 
   @override
   void initState() {
     super.initState();
     _grid = List.generate(
         _instruments.length, (_) => List.generate(_steps, (_) => false));
+    if (kIsWeb) {
+      _audioEngine = WebAudioEngine();
+    }
   }
 
   @override
   void dispose() {
     _playTimer?.cancel();
+    _audioEngine?.dispose();
     super.dispose();
   }
 
   void _toggleCell(int instrument, int step) {
     setState(() => _grid[instrument][step] = !_grid[instrument][step]);
+    // Play sound preview on toggle-on
+    if (_grid[instrument][step]) {
+      _audioEngine?.playInstrument(instrument);
+    }
     HapticFeedback.lightImpact();
   }
 
@@ -625,7 +636,12 @@ class _SequencerTabState extends State<_SequencerTab> {
         setState(() {
           _currentStep = (_currentStep + 1) % _steps;
         });
-        // In a real app, trigger sounds here
+        // Trigger sounds for active cells at current step
+        for (int i = 0; i < _grid.length; i++) {
+          if (_grid[i][_currentStep]) {
+            _audioEngine?.playInstrument(i);
+          }
+        }
       });
     }
   }
@@ -800,11 +816,9 @@ class _SequencerTabState extends State<_SequencerTab> {
                             onTap: () => _toggleCell(row, col),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 100),
-                              margin: EdgeInsets.only(
+                              margin: const EdgeInsets.only(
                                   left: 1,
-                                  right: 1,
-                                  top: 0,
-                                  bottom: 0),
+                                  right: 1),
                               height: 32,
                               decoration: BoxDecoration(
                                 gradient: active
@@ -863,25 +877,36 @@ class _SequencerTabState extends State<_SequencerTab> {
                   label: '🎤 Boom Bap',
                   onTap: () => _loadPreset(_boomBapPattern)),
               _PresetChip(
+                  label: '🎸 Rock',
+                  onTap: () => _loadPreset(_rockPattern)),
+              _PresetChip(
+                  label: '🎧 Hip-Hop',
+                  onTap: () => _loadPreset(_hiphopPattern)),
+              _PresetChip(
                   label: '⚡ EDM',
                   onTap: () => _loadPreset(_edmPattern)),
+              _PresetChip(
+                  label: '🎷 Jazz',
+                  onTap: () => _loadPreset(_jazzPattern)),
+              _PresetChip(
+                  label: '💃 Latin',
+                  onTap: () => _loadPreset(_latinPattern)),
               _PresetChip(
                   label: '🌊 Lo-Fi',
                   onTap: () => _loadPreset(_lofiPattern)),
               _PresetChip(
+                  label: '👊 Drill',
+                  onTap: () => _loadPreset(_drillPattern)),
+              _PresetChip(
+                  label: '🇵🇷 Reggaeton',
+                  onTap: () => _loadPreset(_reggaetonPattern)),
+              _PresetChip(
+                  label: '✝️ Gospel',
+                  onTap: () => _loadPreset(_gospelPattern)),
+              _PresetChip(
                   label: '🤠 Country',
                   onTap: () => _loadPreset(_countryPattern)),
-              _PresetChip(
-                  label: '🎸 Rock',
-                  onTap: () => _loadPreset(_rockPattern)),
             ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        Center(
-          child: Text(
-            'Visual sequencer • Audio playback coming soon',
-            style: TextStyle(color: MoltColors.textMuted, fontSize: 11),
           ),
         ),
       ],
@@ -914,11 +939,39 @@ class _SequencerTabState extends State<_SequencerTab> {
     [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
   ];
 
+  static final _rockPattern = [
+    [true, false, false, false, true, false, true, false, true, false, false, false, true, false, true, false],
+    [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
+    [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
+    [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
+  ];
+
+  static final _hiphopPattern = [
+    [true, false, false, false, false, false, true, false, false, false, true, false, false, false, false, false],
+    [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
+    [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, true],
+    [false, false, false, false, true, false, false, true, false, false, false, false, true, false, false, false],
+  ];
+
   static final _edmPattern = [
     [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
     [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
     [false, false, true, false, false, false, true, false, false, false, true, false, false, false, true, false],
     [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, true],
+  ];
+
+  static final _jazzPattern = [
+    [true, false, false, true, false, false, true, false, false, true, false, false, true, false, false, false],
+    [false, false, false, false, false, true, false, false, false, false, false, true, false, false, true, false],
+    [true, false, true, true, false, true, true, false, true, true, false, true, true, false, true, false],
+    [false, false, false, false, false, false, false, false, false, false, true, false, false, false, false, false],
+  ];
+
+  static final _latinPattern = [
+    [true, false, false, true, false, false, true, false, false, false, true, false, true, false, false, false],
+    [false, false, false, false, true, false, false, true, false, false, false, false, true, false, false, true],
+    [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
+    [false, false, true, false, false, true, false, false, true, false, false, true, false, false, true, false],
   ];
 
   static final _lofiPattern = [
@@ -928,18 +981,32 @@ class _SequencerTabState extends State<_SequencerTab> {
     [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
   ];
 
+  static final _drillPattern = [
+    [true, false, false, true, false, false, false, false, true, false, false, true, false, false, true, false],
+    [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
+    [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
+    [false, false, false, false, true, false, false, true, false, false, false, false, true, false, false, true],
+  ];
+
+  static final _reggaetonPattern = [
+    [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
+    [false, false, false, true, false, false, true, false, false, false, false, true, false, false, true, false],
+    [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false],
+    [false, false, false, true, false, false, true, false, false, false, false, true, false, false, true, false],
+  ];
+
+  static final _gospelPattern = [
+    [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
+    [false, false, false, false, true, false, false, true, false, false, false, false, true, false, false, false],
+    [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false],
+    [false, false, false, false, true, false, false, false, false, false, true, false, true, false, false, true],
+  ];
+
   static final _countryPattern = [
     [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false],
     [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
     [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false],
     [false, false, false, false, true, false, false, true, false, false, false, false, true, false, false, true],
-  ];
-
-  static final _rockPattern = [
-    [true, false, false, false, true, false, true, false, true, false, false, false, true, false, true, false],
-    [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
-    [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
-    [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false],
   ];
 }
 
