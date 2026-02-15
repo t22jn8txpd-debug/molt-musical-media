@@ -10,6 +10,7 @@ import '../../app/services.dart';
 import '../../app/theme.dart';
 import '../../shared/widgets/gradient_button.dart';
 import 'web_audio_helper.dart';
+import 'web_mixer_helper.dart';
 
 class StudioScreen extends StatefulWidget {
   const StudioScreen({super.key, this.services});
@@ -1033,6 +1034,45 @@ class _MixerTabState extends State<_MixerTab> {
     _MixChannel('Master', '🎚️', 0.9, 0.0, false, Colors.amber),
   ];
 
+  WebMixerEngine? _mixer;
+  double _reverbWet = 0.0;
+  double _delayWet = 0.0;
+  double _delayTime = 0.3;
+  double _eqLow = 0.0;
+  double _eqMid = 0.0;
+  double _eqHigh = 0.0;
+  bool _reverbActive = false;
+  bool _delayActive = false;
+  bool _eqActive = true;
+
+  @override
+  void initState() {
+    super.initState();
+    if (kIsWeb) {
+      _mixer = WebMixerEngine();
+    }
+  }
+
+  @override
+  void dispose() {
+    _mixer?.dispose();
+    super.dispose();
+  }
+
+  void _onVolumeChanged(_MixChannel ch, double v) {
+    setState(() => ch.volume = v);
+    if (ch.name == 'Master') {
+      _mixer?.setMasterVolume(v);
+    } else {
+      _mixer?.setVolume(ch.name, v);
+    }
+  }
+
+  void _onMuteToggle(_MixChannel ch) {
+    setState(() => ch.muted = !ch.muted);
+    _mixer?.setMute(ch.name, ch.muted);
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView(
@@ -1042,7 +1082,6 @@ class _MixerTabState extends State<_MixerTab> {
           title: '🎚️ Channel Mixer',
           child: Column(
             children: [
-              // Channel faders
               SizedBox(
                 height: 280,
                 child: Row(
@@ -1051,10 +1090,12 @@ class _MixerTabState extends State<_MixerTab> {
                     return Expanded(
                       child: _ChannelFader(
                         channel: ch,
-                        onVolumeChanged: (v) => setState(() => ch.volume = v),
-                        onPanChanged: (p) => setState(() => ch.pan = p),
-                        onMuteToggle: () =>
-                            setState(() => ch.muted = !ch.muted),
+                        onVolumeChanged: (v) => _onVolumeChanged(ch, v),
+                        onPanChanged: (p) {
+                          setState(() => ch.pan = p);
+                          _mixer?.setPan(ch.name, p);
+                        },
+                        onMuteToggle: () => _onMuteToggle(ch),
                       ),
                     );
                   }).toList(),
@@ -1065,32 +1106,250 @@ class _MixerTabState extends State<_MixerTab> {
         ),
         const SizedBox(height: 12),
 
-        // Effects section
+        // Reverb
         _StudioCard(
-          title: '✨ Effects',
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          title: '🌊 Reverb',
+          child: Column(
             children: [
-              _EffectChip(label: 'Reverb', active: false),
-              _EffectChip(label: 'Delay', active: false),
-              _EffectChip(label: 'Chorus', active: false),
-              _EffectChip(label: 'Distortion', active: false),
-              _EffectChip(label: 'Compressor', active: true),
-              _EffectChip(label: 'EQ', active: true),
-              _EffectChip(label: 'Lo-Fi', active: false),
-              _EffectChip(label: 'Phaser', active: false),
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _reverbActive = !_reverbActive;
+                        _reverbWet = _reverbActive ? 0.4 : 0.0;
+                      });
+                      _mixer?.setReverbWet(_reverbWet);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        gradient: _reverbActive ? MoltColors.purplePinkGradient : null,
+                        color: _reverbActive ? null : MoltColors.surface,
+                        borderRadius: BorderRadius.circular(10),
+                        border: _reverbActive ? null : Border.all(color: MoltColors.purple.withValues(alpha: 0.2)),
+                      ),
+                      child: Text(
+                        _reverbActive ? 'ON' : 'OFF',
+                        style: TextStyle(
+                          color: _reverbActive ? Colors.white : MoltColors.textMuted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text('Wet', style: TextStyle(color: MoltColors.textMuted, fontSize: 12)),
+                  Expanded(
+                    child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        activeTrackColor: MoltColors.purple,
+                        inactiveTrackColor: MoltColors.surfaceLight,
+                        thumbColor: MoltColors.purple,
+                        trackHeight: 3,
+                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                      ),
+                      child: Slider(
+                        value: _reverbWet,
+                        onChanged: (v) {
+                          setState(() => _reverbWet = v);
+                          _mixer?.setReverbWet(v);
+                        },
+                      ),
+                    ),
+                  ),
+                  Text('${(_reverbWet * 100).round()}%', style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                ],
+              ),
             ],
           ),
         ),
-        const SizedBox(height: 16),
-        Center(
-          child: Text(
-            'Visual mixer • Audio processing coming soon',
-            style: TextStyle(color: MoltColors.textMuted, fontSize: 11),
+        const SizedBox(height: 12),
+
+        // Delay
+        _StudioCard(
+          title: '⏱️ Delay',
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _delayActive = !_delayActive;
+                        _delayWet = _delayActive ? 0.3 : 0.0;
+                      });
+                      _mixer?.setDelayWet(_delayWet);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        gradient: _delayActive ? MoltColors.purplePinkGradient : null,
+                        color: _delayActive ? null : MoltColors.surface,
+                        borderRadius: BorderRadius.circular(10),
+                        border: _delayActive ? null : Border.all(color: MoltColors.purple.withValues(alpha: 0.2)),
+                      ),
+                      child: Text(
+                        _delayActive ? 'ON' : 'OFF',
+                        style: TextStyle(
+                          color: _delayActive ? Colors.white : MoltColors.textMuted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text('Wet', style: TextStyle(color: MoltColors.textMuted, fontSize: 12)),
+                  Expanded(
+                    child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        activeTrackColor: MoltColors.pink,
+                        inactiveTrackColor: MoltColors.surfaceLight,
+                        thumbColor: MoltColors.pink,
+                        trackHeight: 3,
+                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                      ),
+                      child: Slider(
+                        value: _delayWet,
+                        onChanged: (v) {
+                          setState(() => _delayWet = v);
+                          _mixer?.setDelayWet(v);
+                        },
+                      ),
+                    ),
+                  ),
+                  Text('${(_delayWet * 100).round()}%', style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const SizedBox(width: 72),
+                  const Text('Time', style: TextStyle(color: MoltColors.textMuted, fontSize: 12)),
+                  Expanded(
+                    child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        activeTrackColor: MoltColors.pink,
+                        inactiveTrackColor: MoltColors.surfaceLight,
+                        thumbColor: MoltColors.pink,
+                        trackHeight: 3,
+                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                      ),
+                      child: Slider(
+                        value: _delayTime,
+                        min: 0.05,
+                        max: 1.5,
+                        onChanged: (v) {
+                          setState(() => _delayTime = v);
+                          _mixer?.setDelayTime(v);
+                        },
+                      ),
+                    ),
+                  ),
+                  Text('${(_delayTime * 1000).round()}ms', style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // EQ
+        _StudioCard(
+          title: '📊 EQ',
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _eqActive = !_eqActive;
+                        if (!_eqActive) {
+                          _eqLow = 0; _eqMid = 0; _eqHigh = 0;
+                          _mixer?.setEqLow(0);
+                          _mixer?.setEqMid(0);
+                          _mixer?.setEqHigh(0);
+                        }
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        gradient: _eqActive ? MoltColors.purplePinkGradient : null,
+                        color: _eqActive ? null : MoltColors.surface,
+                        borderRadius: BorderRadius.circular(10),
+                        border: _eqActive ? null : Border.all(color: MoltColors.purple.withValues(alpha: 0.2)),
+                      ),
+                      child: Text(
+                        _eqActive ? 'ON' : 'OFF',
+                        style: TextStyle(
+                          color: _eqActive ? Colors.white : MoltColors.textMuted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _eqSlider('Low (320Hz)', _eqLow, MoltColors.purple, (v) {
+                setState(() => _eqLow = v);
+                _mixer?.setEqLow(v);
+              }),
+              _eqSlider('Mid (1kHz)', _eqMid, MoltColors.pink, (v) {
+                setState(() => _eqMid = v);
+                _mixer?.setEqMid(v);
+              }),
+              _eqSlider('High (3.2kHz)', _eqHigh, MoltColors.blue, (v) {
+                setState(() => _eqHigh = v);
+                _mixer?.setEqHigh(v);
+              }),
+            ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _eqSlider(String label, double value, Color color, ValueChanged<double> onChanged) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 90,
+            child: Text(label, style: const TextStyle(color: MoltColors.textMuted, fontSize: 11)),
+          ),
+          Expanded(
+            child: SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                activeTrackColor: color,
+                inactiveTrackColor: MoltColors.surfaceLight,
+                thumbColor: color,
+                trackHeight: 3,
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+              ),
+              child: Slider(
+                value: value,
+                min: -12,
+                max: 12,
+                onChanged: _eqActive ? onChanged : null,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 40,
+            child: Text(
+              '${value >= 0 ? '+' : ''}${value.round()}dB',
+              style: const TextStyle(color: Colors.white70, fontSize: 10),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
