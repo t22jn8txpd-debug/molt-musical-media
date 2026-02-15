@@ -41,7 +41,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _loadProfile();
   }
 
@@ -210,6 +210,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 tabs: const [
                   Tab(text: '🎵 Tracks'),
                   Tab(text: '💿 Albums'),
+                  Tab(text: '🎬 Videos'),
                   Tab(text: '❤️ Liked'),
                 ],
               ),
