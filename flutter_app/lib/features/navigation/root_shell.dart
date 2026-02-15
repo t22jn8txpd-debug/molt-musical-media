@@ -13,6 +13,7 @@ import '../studio/studio_screen.dart';
 import '../lyrics/lyrics_workshop_screen.dart';
 import '../profile/profile_screen.dart';
 import '../upload/upload_hub_screen.dart';
+import '../payments/payments_screen.dart';
 
 class RootShell extends StatefulWidget {
   const RootShell({super.key, required this.services});
@@ -26,7 +27,7 @@ class RootShell extends StatefulWidget {
 class _RootShellState extends State<RootShell> {
   int _currentIndex = 0;
 
-  static const _navLabels = ['Home', 'Studio', 'Lyrics', 'Discover', 'Charts', 'Upload', 'Marketplace', 'Agents'];
+  static const _navLabels = ['Home', 'Studio', 'Lyrics', 'Discover', 'Charts', 'Upload', 'Marketplace', 'Agents', 'Pay'];
 
   List<Widget> get _pages => [
         HomeScreen(onNavigate: (i) => setState(() => _currentIndex = i)),
@@ -37,6 +38,7 @@ class _RootShellState extends State<RootShell> {
         UploadHubScreen(services: widget.services),
         const MarketplaceScreen(),
         AgentVerifyScreen(services: widget.services),
+        PaymentsScreen(services: widget.services),
       ];
 
   Future<void> _signOut() async {
@@ -155,6 +157,7 @@ class _RootShellState extends State<RootShell> {
                   BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: 'Upload'),
                   BottomNavigationBarItem(icon: Icon(Icons.storefront_rounded), label: 'Market'),
                   BottomNavigationBarItem(icon: Icon(Icons.smart_toy_outlined), label: 'Agents'),
+                  BottomNavigationBarItem(icon: Icon(Icons.payment_rounded), label: 'Pay'),
                 ],
               ),
             ),
